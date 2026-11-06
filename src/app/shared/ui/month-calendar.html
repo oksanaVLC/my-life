@@ -2,64 +2,31 @@
   <div class="cal-head">
     <h2 class="cal-title">{{ title() }}</h2>
     <div class="row-gap">
-      <button
-        type="button"
-        class="round soft"
-        (click)="shift(-1)"
-        [attr.aria-label]="'calendar.prev' | t"
-      >
-        <app-icon name="back" [size]="18" stroke="2.4" />
-      </button>
-      <button
-        type="button"
-        class="round soft"
-        (click)="shift(1)"
-        [attr.aria-label]="'calendar.next' | t"
-      >
-        <app-icon name="chev" [size]="18" stroke="2.4" />
-      </button>
+      <button type="button" class="round soft" (click)="shift(-1)" [attr.aria-label]="'calendar.prev' | t"><app-icon name="back" [size]="18" stroke="2.4" /></button>
+      <button type="button" class="round soft" (click)="shift(1)" [attr.aria-label]="'calendar.next' | t"><app-icon name="chev" [size]="18" stroke="2.4" /></button>
     </div>
   </div>
   <div class="cal-grid cal-wd" aria-hidden="true">
     @for (w of weekdays(); track $index) { <span>{{ w }}</span> }
   </div>
   <div class="cal-grid">
-    @for (c of cells(); track $index) { @if (c) {
-    <button
-      type="button"
-      class="cal-day"
-      [class.has]="c.count && !c.important"
-      [class.imp]="c.important"
-      [class.today]="c.today"
-      [class.sel]="c.iso === selected()"
-      [attr.aria-pressed]="c.iso === selected()"
-      (click)="selected.set(c.iso)"
-      [attr.aria-label]="c.day + (c.names ? ' · ' + c.names : '') + (c.count ? ' · ' + ('calendar.items' | t: { n: c.count }) : '')"
-    >
-      {{ c.day }}@if (c.icon) {
-      <span class="cal-bd" aria-hidden="true"
-        ><app-date-icon [icon]="c.icon" [size]="16"
-      /></span>
-      }
-    </button>
-    } @else { <span></span> } }
+    @for (c of cells(); track $index) {
+      @if (c) {
+        <button type="button" class="cal-day" [class.has]="c.count && !c.important" [class.imp]="c.important" [class.today]="c.today"
+          [class.sel]="c.iso === selected()" [attr.aria-pressed]="c.iso === selected()" (click)="selected.set(c.iso)"
+          [attr.aria-label]="c.day + (c.names ? ' · ' + c.names : '') + (c.count ? ' · ' + ('calendar.items' | t: { n: c.count }) : '')">{{ c.day }}@if (c.icon) { <span class="cal-bd" aria-hidden="true"><app-date-icon [icon]="c.icon" [size]="16" /></span> }</button>
+      } @else { <span></span> }
+    }
   </div>
   <div class="cal-status" aria-live="polite">
     <span class="cal-status-day">{{ dayLabel() }}</span>
     @if (dayDates().length) {
-    <span class="cal-status-text"
-      >@for (d of dayDates(); track d.id) {
-      <app-date-icon [icon]="d.icon" [size]="14" /> {{ d.name }} }</span
-    >
-    } @if (dayEntries().length) {
-    <span class="cal-status-text"
-      >{{ dayEntries()[0].time ? dayEntries()[0].time + ' · ' : '' }}{{
-      dayEntries()[0].title }}@if (dayEntries().length > 1) {
-      <span> {{ 'calendar.more' | t: { n: dayEntries().length - 1 } }}</span>
-      }</span
-    >
+      <span class="cal-status-text">@for (d of dayDates(); track d.id) { <app-date-icon [icon]="d.icon" [size]="14" /> {{ d.name }} }</span>
+    }
+    @if (dayEntries().length) {
+      <span class="cal-status-text">{{ dayEntries()[0].time ? dayEntries()[0].time + ' · ' : '' }}{{ dayEntries()[0].title }}@if (dayEntries().length > 1) { <span> {{ 'calendar.more' | t: { n: dayEntries().length - 1 } }}</span> }</span>
     } @else if (!dayDates().length) {
-    <span class="cal-status-text muted">{{ 'calendar.nothing' | t }}</span>
+      <span class="cal-status-text muted">{{ 'calendar.nothing' | t }}</span>
     }
   </div>
 </section>

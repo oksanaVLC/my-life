@@ -101,6 +101,7 @@ El idioma se cambia sin recargar, se guarda en el dispositivo y en tus ajustes. 
 - Colecciones: reordenar las 12 de Inicio, abrir una colección (subcarpetas, tarjetas especiales que se pueden renombrar y aceptan arrastrar, selección, mover) y crear una nueva.
 - Buscar, Ajustes, Papelera y Login.
 - Editar colección (nombre, carpeta, tipo, portada con icono o foto recortada, Inicio).
+- Calendario con vistas Día, Semana, Mes y Año (la vista y la fecha van en la dirección); «Apuntar» crea con esa fecha.
 - Cumpleaños y fechas importantes: calendario del mes, próximas fechas («en N días», «cumple 41»), añadir/editar/borrar; icono pequeño en el calendario de Inicio.
 - Futuros regalos: fotos (Cloudinary), precio, para quién, enlace, estado idea → comprado → regalado, filtros y aviso del próximo cumpleaños.
 - Recetas: lista con filtros, búsqueda por ingrediente, estrellas y favoritas; nueva/editar con fotos (Cloudinary), ingredientes y pasos; ver receta con raciones que recalculan los ingredientes y «¿Cuándo la hice?».
@@ -112,4 +113,3 @@ El idioma se cambia sin recargar, se guarda en el dispositivo y en tus ajustes. 
   - Enlaces de Diseño;
   - tabla de Contactos.
 - Editor del collage y pantalla Subir imagen (conectada a `CloudinaryService`).
-- Vistas del calendario por día, semana, mes y año.

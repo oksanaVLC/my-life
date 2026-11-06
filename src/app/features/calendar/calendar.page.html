@@ -1,0 +1,38 @@
+<div class="page-head">
+  <div>
+    <h1>{{ 'cal.title' | t }}</h1>
+    <p class="lead">
+      @if (view() === 'mes' || view() === 'ano') {
+        @if (lead().n) { {{ 'cal.things' | tp: lead().n }} · {{ 'cal.withPrio' | tp: lead().prio }} } @else { {{ 'cal.empty' | t }} }
+      } @else { {{ ('cal.lead.' + view()) | t }} }
+    </p>
+  </div>
+  <div class="row-gap wrap">
+    <div class="seg" role="group" [attr.aria-label]="'cal.view' | t">
+      @for (v of views; track v) {
+        <button type="button" [class.on]="view() === v" [attr.aria-pressed]="view() === v" (click)="go(v)">{{ 'cal.views.' + v | t }}</button>
+      }
+    </div>
+    <app-plus-menu [date]="day()" [where]="where()" />
+  </div>
+</div>
+
+<div class="cal-bar">
+  <div class="row-gap">
+    <button type="button" class="round" (click)="shift(-1)" [attr.aria-label]="'cal.prev' | t"><app-icon name="back" [size]="18" stroke="2.4" /></button>
+    <h2 class="cal-bar-title" aria-live="polite">{{ title() }}</h2>
+    <button type="button" class="round" (click)="shift(1)" [attr.aria-label]="'cal.next' | t"><app-icon name="chev" [size]="18" stroke="2.4" /></button>
+    <button type="button" class="btn white sm" (click)="today()">{{ 'cal.today' | t }}</button>
+  </div>
+  <ul class="legend sm">
+    <li><span class="lg-box prio" aria-hidden="true"></span>{{ 'cal.legendPrio' | t }}</li>
+    <li><span class="lg-box" aria-hidden="true"></span>{{ 'cal.legendNoPrio' | t }}</li>
+  </ul>
+</div>
+
+@switch (view()) {
+  @case ('dia') { <app-cal-day [day]="day()" (openWeek)="go('semana')" /> }
+  @case ('semana') { <app-cal-week [day]="day()" (openDay)="go('dia', $event)" /> }
+  @case ('mes') { <app-cal-month [day]="day()" (pick)="go('mes', $event, true)" (openDay)="go('dia', $event)" /> }
+  @case ('ano') { <app-cal-year [day]="day()" (openDay)="go('dia', $event)" (openMonth)="go('mes', $event)" /> }
+}

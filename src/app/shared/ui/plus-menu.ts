@@ -37,6 +37,8 @@ export class PlusMenu {
   private readonly el = inject(ElementRef<HTMLElement>);
   readonly collectionId = input<string | undefined>(undefined);
   readonly where = input('');
+  /** Fecha para lo que se cree (AAAA-MM-DD), p. ej. desde el calendario */
+  readonly date = input<string | undefined>(undefined);
   protected readonly open = signal(false);
   protected readonly items: { type: EntryType; tint: string }[] = [
     { type: 'task', tint: 'p-g' }, { type: 'note', tint: 'p-b' }, { type: 'idea', tint: 'p-y' }, { type: 'none', tint: 'p-l' },
@@ -44,6 +46,7 @@ export class PlusMenu {
 
   protected create(type: EntryType): void {
     const e = this.store.newEntry(type, this.collectionId());
+    if (this.date()) this.store.updateEntry(e.id, { date: this.date() });
     this.open.set(false);
     void this.router.navigate(type === 'note' ? ['/notas', e.id] : ['/entrada', e.id]);
   }
