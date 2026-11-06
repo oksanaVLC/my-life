@@ -1,0 +1,107 @@
+@if (col(); as c) {
+  <app-crumbs [items]="crumbs()" />
+  <div class="page-head">
+    <div class="head-cover">
+      <span class="head-tile"><app-cover [collection]="c" [iconSize]="56" /></span>
+      <div>
+        <h1>{{ c.name }}</h1>
+        <p class="lead">{{ 'entries.count' | tp: countIn(c) }} · {{ 'collection.subCount' | tp: subs().length }}</p>
+      </div>
+    </div>
+    <app-plus-menu [collectionId]="c.id" [where]="c.name" />
+  </div>
+
+  @if (toast()) { <p class="toast" role="status">{{ toast() }}</p> }
+
+  @if (specials().length) {
+    <section class="block" aria-labelledby="h-spec">
+      <div class="block-head"><h2 id="h-spec">{{ 'collection.specials' | t }}</h2><span class="muted">{{ 'collection.specialsHint' | t }}</span></div>
+      <div class="grid specials">
+        @for (s of specials(); track s.id) {
+          <article class="special" [class.over]="over() === s.id" (dragover)="onOver($event, s.id)" (dragleave)="over.set(null)" (drop)="onDrop($event, s)">
+            <a class="special-cover" [routerLink]="'/colecciones/' + s.id" [attr.aria-label]="s.name"><app-cover [collection]="s" [iconSize]="60" /></a>
+            <div class="special-body">
+              <span class="badge-dark">{{ 'collection.special' | t }}</span>
+              @if (renaming() === s.id) {
+                <form class="row-gap" (submit)="saveRename($event, s)">
+                  <input class="input" [value]="draft()" (input)="draft.set(value($event))" [attr.aria-label]="'collection.newName' | t" />
+                  <button type="submit" class="btn primary sm">{{ 'common.save' | t }}</button>
+                </form>
+              } @else {
+                <a class="special-title" [routerLink]="'/colecciones/' + s.id">{{ s.name }}</a>
+              }
+              @if (s.description) { <p>{{ s.description }}</p> }
+              <span class="chip">{{ 'entries.count' | tp: countIn(s) }}</span>
+            </div>
+            <button type="button" class="round soft pencil" (click)="startRename(s)" [attr.aria-label]="'collection.rename' | t: { name: s.name }"><app-icon name="pencil" [size]="18" /></button>
+          </article>
+        }
+      </div>
+    </section>
+  }
+
+  @if (subs().length) {
+    <section class="block" aria-labelledby="h-subs">
+      <h2 id="h-subs">{{ 'collection.subfolders' | t }}</h2>
+      <div class="grid subs">
+        @for (s of subs(); track s.id) {
+          <a class="sub card" [class.over]="over() === s.id" [routerLink]="s.route ?? '/colecciones/' + s.id"
+            (dragover)="onOver($event, s.id)" (dragleave)="over.set(null)" (drop)="onDrop($event, s)">
+            <span class="thumb"><app-cover [collection]="s" [iconSize]="30" /></span>
+            <span class="grow"><strong>{{ s.name }}</strong><small>{{ 'entries.count' | tp: countIn(s) }}</small></span>
+            <app-icon name="chev" [size]="18" />
+          </a>
+        }
+      </div>
+    </section>
+  }
+
+  <section class="block" aria-labelledby="h-ent">
+    <div class="block-head">
+      <h2 id="h-ent">{{ 'collection.entries' | t }}</h2>
+      <div class="row-gap wrap">
+        <app-year-select [years]="store.years()" [(value)]="year" />
+        <app-view-switch [(value)]="view" />
+      </div>
+    </div>
+    <div class="row-gap wrap" role="group" [attr.aria-label]="'collection.filterType' | t">
+      @for (t of types; track t) {
+        <button type="button" class="chip-btn" [class.on]="type() === t" [attr.aria-pressed]="type() === t" (click)="type.set(t)">
+          {{ (t === 'all' ? 'common.all' : 'type.plural.' + t) | t }} · {{ countType(t) }}
+        </button>
+      }
+    </div>
+
+    @if (selected().size) {
+      <div class="selbar" role="toolbar" [attr.aria-label]="'collection.selection' | t">
+        <span class="grow">{{ 'collection.selected' | tp: selected().size }}</span>
+        <button type="button" class="btn ghost" (click)="moving.set(true)"><app-icon name="move" [size]="18" />{{ 'collection.moveTo' | t }}</button>
+        <button type="button" class="btn ghost" (click)="trashSel()"><app-icon name="trash" [size]="18" />{{ 'entry.delete' | t }}</button>
+        <button type="button" class="round ghost" (click)="clearSel()" [attr.aria-label]="'common.cancel' | t"><app-icon name="x" [size]="18" /></button>
+      </div>
+      @if (moving()) {
+        <div class="card move-box" role="dialog" aria-labelledby="h-move">
+          <h3 id="h-move">{{ 'collection.moveTo' | t }}</h3>
+          <select class="input" (change)="moveTarget.set(value($event))" [attr.aria-label]="'entry.collection' | t">
+            <option value="">{{ 'entry.noCollection' | t }}</option>
+            @for (o of options(); track o.id) { <option [value]="o.id">{{ o.label }}</option> }
+          </select>
+          <div class="row-gap"><button type="button" class="btn soft" (click)="moving.set(false)">{{ 'common.cancel' | t }}</button><button type="button" class="btn primary" (click)="doMove()">{{ 'collection.moveHere' | t }}</button></div>
+        </div>
+      }
+    }
+
+    @if (items().length) {
+      <div class="grid" [class.cards]="view() === 'cards'" [class.rows]="view() === 'list'">
+        @for (e of items(); track e.id) {
+          <app-entry-card [entry]="e" [view]="view()" [selectable]="true" [selected]="selected().has(e.id)" (toggleSelect)="toggle(e.id)" [draggable]="true" />
+        }
+      </div>
+    } @else {
+      <app-empty [icon]="type() === 'all' ? 'folder' : type()" [title]="'collection.emptyTitle' | t" [text]="'collection.emptyText' | t" />
+    }
+    <p class="muted"><app-icon name="move" [size]="16" /> {{ 'collection.dragHint' | t }}</p>
+  </section>
+} @else {
+  <app-empty icon="folder" [title]="'notFound.title' | t" [text]="'notFound.text' | t"><a routerLink="/colecciones" class="btn primary">{{ 'nav.collections' | t }}</a></app-empty>
+}

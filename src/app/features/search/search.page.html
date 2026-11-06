@@ -1,0 +1,37 @@
+<h1>{{ 'nav.search' | t }}</h1>
+<label class="search-field big">
+  <span class="search-ico"><app-icon name="search" [size]="20" color="#fff" stroke="2.6" /></span>
+  <span class="sr-only">{{ 'search.label' | t }}</span>
+  <input type="search" [value]="query()" (input)="onQuery($event)" [placeholder]="'common.searchPh' | t" autofocus />
+</label>
+
+<div class="toolbar">
+  <label class="dd">{{ 'search.collection' | t }}
+    <select (change)="onColl($event)" [attr.aria-label]="'search.collection' | t">
+      <option value="all">{{ 'common.allF' | t }}</option>
+      @for (c of store.rootCollections(); track c.id) { <option [value]="c.id" [selected]="c.id === coll()">{{ c.name }}</option> }
+    </select>
+  </label>
+  <app-year-select [years]="store.years()" [allowAll]="true" [(value)]="year" />
+  <span class="muted">{{ 'search.accentHint' | t }}</span>
+</div>
+
+<div class="row-gap wrap" role="group" [attr.aria-label]="'collection.filterType' | t">
+  @for (t of types; track t) {
+    <button type="button" class="chip-btn" [class.on]="type() === t" [attr.aria-pressed]="type() === t" (click)="type.set(t)">
+      {{ (t === 'all' ? 'common.all' : 'type.plural.' + t) | t }} · {{ countType(t) }}
+    </button>
+  }
+</div>
+
+<p class="muted" aria-live="polite">
+  @if (query().trim()) { {{ 'search.results' | tp: results().length }} «{{ query().trim() }}» } @else { {{ 'search.all' | t }} }
+</p>
+
+@if (results().length) {
+  <div class="grid rows">
+    @for (e of results(); track e.id) { <app-entry-card [entry]="e" view="list" [query]="query().startsWith('#') ? '' : query()" /> }
+  </div>
+} @else {
+  <app-empty icon="search" [title]="'search.emptyTitle' | t" [text]="'search.emptyText' | t" />
+}

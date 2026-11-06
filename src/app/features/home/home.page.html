@@ -1,0 +1,76 @@
+<h1 class="sr-only">{{ 'nav.home' | t }}</h1>
+
+@if (sections().calendar || sections().collage) {
+  <section class="hero">
+    @if (sections().calendar) {
+      <div class="hero-cal">
+        <app-month-calendar />
+        <a routerLink="/tareas" class="btn orange"><app-icon name="cal" [size]="18" />{{ 'home.toCalendar' | t }}</a>
+      </div>
+    }
+    @if (sections().collage) {
+      <div class="hero-collage">
+        <div class="collage">
+          @for (src of collage; track src) { <img [src]="src" alt="" loading="lazy" /> }
+        </div>
+        <span class="btn white disabled-look">{{ 'home.editCollage' | t }}</span>
+      </div>
+    }
+  </section>
+}
+
+@if (sections().quote) {
+  <section class="quote card" [attr.aria-label]="'home.quote' | t">
+    <span class="quote-mark" aria-hidden="true">“</span>
+    <p>{{ 'home.quoteText' | t }}</p>
+  </section>
+}
+
+@if (sections().featured && featured().length) {
+  <section class="block" aria-labelledby="h-feat">
+    <div class="block-head">
+      <h2 id="h-feat">{{ 'nav.featured' | t }}</h2>
+      <a routerLink="/destacados" class="btn white sm">{{ 'common.seeMore' | t }}<app-icon name="chev" [size]="16" /></a>
+    </div>
+    <div class="grid cards">
+      @for (e of featured(); track e.id) { <app-entry-card [entry]="e" /> }
+    </div>
+  </section>
+}
+
+@if (sections().main) {
+  <section class="block" aria-labelledby="h-main">
+    <h2 id="h-main">{{ 'home.main' | t }}</h2>
+    <div class="grid main-tiles">
+      @for (m of main(); track m.type) {
+        <a [routerLink]="m.link" class="main-tile" [class]="'main-tile ' + m.tint">
+          <app-icon [name]="m.type" [size]="72" color="#2A2A2E" />
+          <span class="main-tile-foot"><strong>{{ 'type.plural.' + m.type | t }}</strong><span>{{ m.count }}</span></span>
+        </a>
+      }
+    </div>
+  </section>
+}
+
+@if (sections().collections) {
+  <section class="block" aria-labelledby="h-col">
+    <div class="block-head">
+      <h2 id="h-col">{{ 'nav.collections' | t }}</h2>
+      <a routerLink="/colecciones/nueva" class="btn primary sm"><app-icon name="plus" [size]="16" stroke="2.4" />{{ 'collections.new' | t }}</a>
+    </div>
+    <p class="muted">{{ 'home.collectionsHint' | t }}</p>
+    <div class="grid covers">
+      @for (c of store.homeCollections(); track c.id) { <app-collection-card [collection]="c" /> }
+    </div>
+    <a routerLink="/colecciones" class="btn outline end">{{ 'home.allCollections' | t: { n: totalCollections() } }}<app-icon name="chev" [size]="16" stroke="2.4" /></a>
+  </section>
+}
+
+@if (sections().latest) {
+  <section class="block" aria-labelledby="h-latest">
+    <h2 id="h-latest">{{ 'home.latest' | t }}</h2>
+    <div class="grid cards">
+      @for (e of latest(); track e.id) { <app-entry-card [entry]="e" /> }
+    </div>
+  </section>
+}

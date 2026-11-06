@@ -1,0 +1,61 @@
+<div class="page-head">
+  <div>
+    <h1>{{ 'nav.collections' | t }}</h1>
+    <p class="lead">{{ 'collections.lead' | t: { n: store.rootCollections().length } }}</p>
+  </div>
+  <a routerLink="/colecciones/nueva" class="btn primary"><app-icon name="plus" [size]="18" stroke="2.4" />{{ 'collections.new' | t }}</a>
+</div>
+
+<div class="toolbar">
+  <label class="search-field">
+    <span class="search-ico"><app-icon name="search" [size]="18" color="#fff" stroke="2.6" /></span>
+    <span class="sr-only">{{ 'common.search' | t }}</span>
+    <input type="search" [value]="query()" (input)="onQuery($event)" [placeholder]="'collections.searchPh' | t" [disabled]="editing()" />
+  </label>
+  <app-year-select [years]="store.years()" [(value)]="year" />
+  <label class="pill-select">{{ 'collections.sort' | t }}
+    <select (change)="onSort($event)" [disabled]="editing()">
+      <option value="recent" [selected]="sort() === 'recent'">{{ 'collections.recent' | t }}</option>
+      <option value="name" [selected]="sort() === 'name'">{{ 'collections.byName' | t }}</option>
+    </select>
+  </label>
+  <app-view-switch [(value)]="view" />
+  @if (editing()) {
+    <button type="button" class="btn dark" (click)="finishEdit()"><app-icon name="check" [size]="18" stroke="2.6" />{{ 'common.done' | t }}</button>
+  } @else {
+    <button type="button" class="btn outline" (click)="startEdit()">{{ 'collections.reorder' | t }}</button>
+  }
+</div>
+<p class="muted">{{ (editing() ? 'collections.reorderHint' : 'collections.homeHint') | t: { n: HOME } }}</p>
+
+@if (shown().length) {
+  @if (view() === 'cards') {
+    <div class="grid covers">
+      @for (c of shown(); track c.id; let i = $index) {
+        @if (editing() && i === HOME) { <div class="divider" role="separator">{{ 'collections.onlyHere' | t }}</div> }
+        <div class="cc-wrap" [class.editing]="editing()" [class.home]="editing() && i < HOME" [attr.draggable]="editing()"
+          (dragstart)="dragStart(c.id)" (dragover)="$event.preventDefault()" (drop)="drop(c.id, $event)">
+          <app-collection-card [collection]="c" [badge]="homeIndex(c)" />
+          @if (editing()) {
+            <span class="cc-arrows">
+              <button type="button" class="round" (click)="move(c.id, -1)" [attr.aria-label]="'collections.before' | t"><app-icon name="back" [size]="16" stroke="2.4" /></button>
+              <button type="button" class="round" (click)="move(c.id, 1)" [attr.aria-label]="'collections.after' | t"><app-icon name="chev" [size]="16" stroke="2.4" /></button>
+            </span>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="card list">
+      @for (c of shown(); track c.id) {
+        <a class="list-row" [routerLink]="c.route ?? '/colecciones/' + c.id">
+          <span class="thumb"><app-cover [collection]="c" [iconSize]="34" /></span>
+          <span class="grow"><strong>{{ c.name }}</strong></span>
+          <span class="muted">{{ 'entries.count' | tp: count(c) }}</span>
+        </a>
+      }
+    </div>
+  }
+} @else {
+  <app-empty icon="folder" [title]="'collections.emptyTitle' | t" [text]="'list.emptyYear' | t: { year: year() }" />
+}

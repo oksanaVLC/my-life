@@ -1,0 +1,21 @@
+<div class="ec-head">
+  @if (selectable()) {
+    <label class="ec-check">
+      <input type="checkbox" [checked]="selected()" (change)="toggleSelect.emit()" [attr.aria-label]="'entry.select' | t: { title: entry().title }" />
+    </label>
+  } @else if (entry().type === 'task') {
+    <label class="ec-check">
+      <input type="checkbox" [checked]="entry().done" (change)="toggleDone()" [attr.aria-label]="'entry.complete' | t" />
+    </label>
+  }
+  <span class="ec-tile ic" [class]="'ec-tile ic ' + tint()"><app-icon [name]="entry().type" [size]="view() === 'list' ? 24 : 28" color="#2A2A2E" /></span>
+  <span class="ec-type">{{ 'type.' + entry().type | t }}</span>
+  <span class="ec-when"><app-icon name="clock" [size]="14" />{{ when() }}</span>
+  <app-star [on]="entry().featured" (toggle)="feature()" />
+</div>
+<h3 class="ec-title"><a [routerLink]="link()">{{ title().pre }}@if (title().hit) {<mark>{{ title().hit }}</mark>}{{ title().post }}</a></h3>
+@if (entry().body && view() === 'cards') { <p class="ec-body">{{ entry().body }}</p> }
+<div class="ec-tags">
+  @if (where()) { <span class="chip">{{ where() }}</span> }
+  @for (t of entry().tags; track t) { <span class="chip tag">{{ t }}</span> }
+</div>

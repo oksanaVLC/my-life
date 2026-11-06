@@ -1,0 +1,58 @@
+<div class="page-head">
+  <div>
+    <h1>{{ titleKey() | t }}</h1>
+    <p class="lead">{{ 'list.lead.' + type() | t }}</p>
+  </div>
+  @if (type() !== 'featured') { <app-plus-menu [where]="titleKey() | t" /> }
+</div>
+
+<div class="toolbar">
+  <app-year-select [years]="years()" [(value)]="year" />
+  <app-view-switch [(value)]="view" />
+  <label class="search-field">
+    <span class="search-ico"><app-icon name="search" [size]="18" color="#fff" stroke="2.6" /></span>
+    <span class="sr-only">{{ 'common.search' | t }}</span>
+    <input type="search" [value]="query()" (input)="onQuery($event)" [placeholder]="'common.searchPh' | t" />
+  </label>
+  @if (type() === 'task' || type() === 'idea') {
+    <button type="button" class="chip-btn" [class.on]="onlyPrio()" [attr.aria-pressed]="onlyPrio()" (click)="onlyPrio.set(!onlyPrio())">
+      <app-icon name="flag" [size]="16" />{{ (type() === 'task' ? 'list.onlyPrio' : 'list.onlySuper') | t }}
+    </button>
+  }
+</div>
+
+@if (isTask()) {
+  <div class="seg tabs" role="group" [attr.aria-label]="'list.status' | t">
+    <button type="button" [class.on]="status() === 'active'" [attr.aria-pressed]="status() === 'active'" (click)="status.set('active')">{{ 'list.active' | t }} · {{ counts().active }}</button>
+    <button type="button" [class.on]="status() === 'done'" [attr.aria-pressed]="status() === 'done'" (click)="status.set('done')">{{ 'list.done' | t }} · {{ counts().done }}</button>
+  </div>
+}
+
+@if (pageItems().length) {
+  <div class="grid" [class.cards]="view() === 'cards'" [class.rows]="view() === 'list'" [class.scroll]="perPage() > 10">
+    @for (e of pageItems(); track e.id) { <app-entry-card [entry]="e" [view]="view()" [query]="query()" /> }
+  </div>
+  <nav class="pager" [attr.aria-label]="'list.pages' | t">
+    <span class="muted">{{ 'list.showing' | t: { range: range() } }}</span>
+    <div class="row-gap">
+      <button type="button" class="round soft" [disabled]="page() <= 1" (click)="page.set(page() - 1)" [attr.aria-label]="'list.prev' | t"><app-icon name="back" [size]="16" /></button>
+      @for (p of pageNumbers(); track p) {
+        <button type="button" class="page-num" [class.on]="p === page()" [attr.aria-current]="p === page() ? 'page' : null" (click)="page.set(p)">{{ p }}</button>
+      }
+      <button type="button" class="round soft" [disabled]="page() >= pages()" (click)="page.set(page() + 1)" [attr.aria-label]="'list.next' | t"><app-icon name="chev" [size]="16" /></button>
+    </div>
+    <label class="pill-select">{{ 'list.perPage' | t }}
+      <select (change)="setPerPage($event)">
+        @for (n of perPageOptions; track n) { <option [value]="n" [selected]="n === perPage()">{{ n }}</option> }
+      </select>
+    </label>
+  </nav>
+} @else {
+  <app-empty [icon]="type() === 'featured' ? 'star' : type()" [title]="'list.emptyTitle' | t" [text]="(year() === 'all' ? 'list.emptyText' : 'list.emptyYear') | t: { year: year() }" />
+}
+
+<ul class="legend">
+  <li><i class="sw white"></i>{{ 'legend.normal.' + (type() === 'idea' ? 'idea' : 'task') | t }}</li>
+  <li><i class="sw orange"></i>{{ 'legend.prio.' + (type() === 'idea' ? 'idea' : 'task') | t }}</li>
+  <li><i class="sw gold"></i>{{ 'legend.featured' | t }}</li>
+</ul>

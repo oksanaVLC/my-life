@@ -1,0 +1,74 @@
+import { Collection, Entry } from './models';
+
+const now = '2026-11-04T10:00:00.000Z';
+const c = (id: string, name: string, cover: Collection['cover'], extra: Partial<Collection> = {}): Collection => ({
+  id, name, cover, kind: 'generic', updatedAt: now, ...extra,
+});
+
+/** Colecciones de ejemplo (las mismas del diseño). */
+export const DEMO_COLLECTIONS: Collection[] = [
+  c('diseno', 'Diseño', { kind: 'icon', value: 'palette', tint: 'y' }, { homeOrder: 0, kind: 'links', updatedAt: '2026-10-31T10:00:00Z' }),
+  c('trabajo', 'Trabajo', { kind: 'icon', value: 'work', tint: 'b' }, { homeOrder: 1, updatedAt: '2026-10-29T10:00:00Z' }),
+  c('hijo', 'Mi hijo', { kind: 'icon', value: 'heart', tint: 'p' }, { homeOrder: 2, updatedAt: '2026-10-28T10:00:00Z' }),
+  c('casa', 'Casa', { kind: 'icon', value: 'home', tint: 'y' }, { homeOrder: 3, updatedAt: '2026-10-30T10:00:00Z' }),
+  c('youtube', 'YouTube', { kind: 'img', value: 'img/covers/youtube.jpg' }, { homeOrder: 4, updatedAt: '2026-10-20T10:00:00Z' }),
+  c('yo', 'Yo', { kind: 'img', value: 'img/covers/yo.jpg' }, { homeOrder: 5, updatedAt: '2026-10-18T10:00:00Z' }),
+  c('maxstudio', 'Max Studio', { kind: 'logo', value: 'img/covers/maxstudio.png' }, { homeOrder: 6, updatedAt: '2026-10-25T10:00:00Z' }),
+  c('dibujos', 'Dibujos', { kind: 'img', value: 'img/covers/dibujos.webp' }, { homeOrder: 7, updatedAt: '2026-10-12T10:00:00Z' }),
+  c('torneos', 'Torneos', { kind: 'icon', value: 'chess', tint: 'l' }, { homeOrder: 8, kind: 'tournaments', updatedAt: '2026-10-19T10:00:00Z' }),
+  c('recetas', 'Recetas', { kind: 'img', value: 'img/covers/crepes.jpg' }, { homeOrder: 9, kind: 'recipes', parentId: undefined, updatedAt: '2026-10-27T10:00:00Z' }),
+  c('busqueda', 'Búsqueda de trabajo', { kind: 'icon', value: 'job', tint: 'g' }, { homeOrder: 10, updatedAt: '2026-11-03T10:00:00Z' }),
+  c('cumples', 'Cumpleaños', { kind: 'icon', value: 'cake', tint: 'p' }, { homeOrder: 11, kind: 'birthdays', updatedAt: '2026-10-26T10:00:00Z' }),
+  c('salud', 'Salud', { kind: 'icon', value: 'health', tint: 'b' }, { updatedAt: '2026-10-15T10:00:00Z' }),
+  // subcarpetas
+  c('casa-tareas', 'Tareas de casa', { kind: 'icon', value: 'folder', tint: 'g' }, { parentId: 'casa' }),
+  c('casa-compras', 'Compras', { kind: 'icon', value: 'folder', tint: 'b' }, { parentId: 'casa' }),
+  c('bt-dev', 'Desarrolladora', { kind: 'icon', value: 'code', tint: 'b' }, { parentId: 'busqueda' }),
+  c('bt-prof', 'Profesora', { kind: 'icon', value: 'book', tint: 'y' }, { parentId: 'busqueda' }),
+  c('bt-dis', 'Diseñadora', { kind: 'icon', value: 'palette', tint: 'p' }, { parentId: 'busqueda' }),
+  c('bt-be', 'Business English', { kind: 'icon', value: 'globe', tint: 'g' }, { parentId: 'busqueda' }),
+  // carpetas especiales (se ven como tarjetas destacadas)
+  c('bt-c-dev', 'Contactos · Desarrolladora', { kind: 'icon', value: 'table', tint: 'b' }, { parentId: 'busqueda', kind: 'contacts', description: 'Tabla de empresas: email, teléfono, notas y fecha automática.' }),
+  c('bt-c-prof', 'Contactos · Profesora', { kind: 'icon', value: 'table', tint: 'y' }, { parentId: 'busqueda', kind: 'contacts', description: 'Academias y colegios a los que he escrito.' }),
+  c('bt-c-dis', 'Contactos · Diseñadora', { kind: 'icon', value: 'table', tint: 'p' }, { parentId: 'busqueda', kind: 'contacts', description: 'Estudios y agencias de diseño.' }),
+  c('bt-c-be', 'Contactos · Business English', { kind: 'icon', value: 'table', tint: 'g' }, { parentId: 'busqueda', kind: 'contacts', description: 'Empresas contactadas para dar clases de inglés.' }),
+  c('yt-adults', 'English for Spanish Adults', { kind: 'icon', value: 'video', tint: 'b' }, { parentId: 'youtube', kind: 'special', description: 'Inglés para adultos hispanohablantes.' }),
+  c('yt-kids', 'English for Kids', { kind: 'icon', value: 'video', tint: 'y' }, { parentId: 'youtube', kind: 'special', description: 'Canciones, juegos y palabras para los peques.' }),
+  c('yt-esru', 'Español para rusos', { kind: 'icon', value: 'video', tint: 'p' }, { parentId: 'youtube', kind: 'special', description: 'Curso A1–A2 para rusohablantes.' }),
+  c('yt-ru', 'Russian for foreigners', { kind: 'icon', value: 'video', tint: 'l' }, { parentId: 'youtube', kind: 'special', description: 'Alfabeto, frases del día a día y cultura.' }),
+];
+
+let n = 0;
+const e = (type: Entry['type'], title: string, body: string, date: string | undefined, collectionId: string | undefined, extra: Partial<Entry> = {}): Entry => ({
+  id: `e${++n}`, type, title, body, date, prio: false, featured: false, done: false, steps: [], tags: [], links: [], images: [],
+  collectionId, createdAt: now, updatedAt: date ? `${date}T09:00:00.000Z` : now, ...extra,
+});
+
+/** Entradas de ejemplo. */
+export const DEMO_ENTRIES: Entry[] = [
+  e('task', 'Llamar al fontanero', 'Gotea el grifo de la cocina. Pedir presupuesto antes del viernes.', '2026-11-04', 'casa-tareas', { prio: true, time: '10:00', tags: ['#urgente'], steps: [{ text: 'Buscar 2–3 fontaneros', done: true }, { text: 'Pedir presupuesto', done: false }] }),
+  e('task', 'Actualizar portfolio de Max Studio', 'Añadir los dos últimos proyectos y revisar textos.', '2026-11-04', 'maxstudio', { featured: true, tags: ['#web'] }),
+  e('task', 'Cocinar juntos el domingo', 'Probar la receta de crepes.', '2026-11-01', 'hijo', { featured: true, tags: ['#finde', '#cocina'] }),
+  e('task', 'Renovar el seguro del hogar', 'Vence el 30 de noviembre. Comparar 2–3 ofertas.', '2026-11-30', 'casa-tareas', { tags: ['#papeles'] }),
+  e('task', 'Enviar propuesta a cliente', 'Presupuesto de la web de catering.', '2026-11-05', 'maxstudio', { prio: true, tags: ['#web'] }),
+  e('task', 'Grabar «Meet vs Know»', 'Guion listo. Grabar el martes por la mañana.', '2026-11-05', 'yt-adults', { prio: true, tags: ['#grabar'] }),
+  e('task', 'Actualizar el CV en ES, EN y RU', 'Añadir los últimos proyectos.', '2026-11-05', 'busqueda', { prio: true, tags: ['#cv'] }),
+  e('task', 'Llamar a RR. HH. de las empresas del polígono', 'Ofrecer una clase de prueba gratis.', '2026-11-10', 'bt-be'),
+  e('task', 'Revisión anual', 'Pedir cita en el centro de salud.', '2026-11-12', 'salud', { tags: ['#cita'] }),
+  e('task', 'Comprar tinta para la impresora', '', undefined, 'casa', { tags: ['#compras'] }),
+  e('task', 'Preparar la mochila del cole', '', '2026-11-01', 'hijo', { done: true }),
+  e('idea', 'Serie «Español en 5 minutos»', 'Una expresión al día, vídeo corto vertical.', '2026-10-30', 'yt-esru', { prio: true, featured: true, tags: ['#shorts'] }),
+  e('idea', 'Plantilla web para peluquerías', 'Reservas online + galería.', '2026-10-29', 'maxstudio', { prio: true }),
+  e('idea', 'Rincón de lectura junto a la ventana', 'Butaca, lámpara cálida y estantería baja.', '2026-10-28', 'casa', { tags: ['#deco'] }),
+  e('idea', 'Un álbum con todos sus dibujos', 'Escanear los mejores y hacer un libro.', '2026-10-30', 'dibujos', { featured: true, tags: ['#regalo'] }),
+  e('idea', 'Portfolio con casos de estudio', 'Problema → solución → resultado.', '2026-10-20', 'bt-dis', { tags: ['#portfolio'] }),
+  e('idea', 'Vídeo: canción de los números', 'Con tarjetas de colores.', '2027-01-15', 'yt-kids', { tags: ['#guion'] }),
+  e('note', 'Medidas del salón', 'Pared del sofá: 4,20 m · ventana: 1,60 × 1,40 m.', '2026-10-25', 'casa'),
+  e('note', 'Carta de presentación base', 'Quién soy, qué aporto, por qué esta empresa.', '2026-10-30', 'busqueda', { tags: ['#plantilla'] }),
+  e('note', 'Propuesta de Business English', 'Clases in-company: grupos de 4–6, 2 h/semana, B1–C1.', '2026-11-03', 'bt-be', { tags: ['#propuesta'] }),
+  e('note', 'Aperturas para practicar', 'Italiana y siciliana.', '2026-10-26', 'torneos', { featured: true, tags: ['#ajedrez'] }),
+  e('note', 'Guion: los colores en inglés', 'Canción + juego de buscar objetos por casa.', '2026-10-28', 'yt-kids', { tags: ['#guion'] }),
+  e('none', 'Lista de la compra semanal', 'Fruta, yogures, pan integral, detergente.', '2026-10-31', 'casa-compras', { tags: ['#súper'] }),
+  e('none', 'Equipo de grabación', 'Micrófono de solapa, aro de luz, trípode.', '2026-10-20', 'youtube'),
+  e('task', 'Comprar pilas para el mando', '', '2026-11-02', 'casa', { deletedAt: '2026-11-02T10:00:00Z' }),
+];

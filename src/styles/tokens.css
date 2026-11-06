@@ -1,0 +1,116 @@
+/* ==========================================================================
+   My Life App — design tokens
+   Fuente de verdad para el proyecto Astro. Copiar a src/styles/tokens.css
+   ========================================================================== */
+
+:root {
+  /* ---- Tipografía ---- */
+  --font-sans: 'Instrument Sans', 'Onest', system-ui, sans-serif;   /* toda la interfaz */
+  --font-logo: 'Freeman', sans-serif;                       /* solo el logo MY LIFE */
+
+  --fs-display: 52px;   /* h1 de pantalla (Colecciones, Casa, Ajustes…) */
+  --fs-h1: 44px;        /* h1 de listados (Tareas, Ideas…) */
+  --fs-h2: 34px;        /* títulos de sección en Inicio */
+  --fs-h3: 26px;        /* subsecciones (Subcarpetas, Entradas) */
+  --fs-card-title: 22px;
+  --fs-body-lg: 19px;   /* subtítulos */
+  --fs-body: 17px;      /* texto base */
+  --fs-small: 15px;     /* metadatos, etiquetas */
+  --fs-label: 13px;     /* LABELS en mayúsculas, letter-spacing .1em */
+  --fw-regular: 400; --fw-medium: 500; --fw-semibold: 600; --fw-bold: 700;
+  --ls-tight: -0.03em;  /* titulares grandes */
+  --ls-label: 0.1em;
+  --lh-body: 1.5;
+
+  /* Móvil */
+  --fs-m-h1: 32px; --fs-m-h2: 25px; --fs-m-card-title: 17px; --fs-m-body: 16px;
+
+  /* ---- Colores base ---- */
+  --c-bg: #F7F7F5;
+  --c-surface: #FFFFFF;
+  --c-soft: #F2F2EE;        /* chips, botones suaves, fondo de etiquetas */
+  --c-border: #E4E4E0;
+  --c-divider: #EFEFEB;
+  --c-ink: #111111;         /* titulares, iconos */
+  --c-text: #1E1E22;
+  --c-text-2: #3A3A40;
+  --c-muted: #555555;
+  --c-muted-2: #6A6A70;
+  --c-icon: #2A2A2E;        /* trazo de los iconos de portada */
+  --c-success: #0B7A4B;     /* guardado, interruptores activos */
+  --c-success-bg: #EAF8EF;
+  --c-danger: #B42318;      /* borrar */
+  --c-danger-border: #F0B8B2;
+  --c-star: #F5B301;        /* estrella activa */
+  --c-star-stroke: #E0A200;
+  --c-star-off: #8A8A90;
+  --c-footer: #064E3B;      /* esmeralda profundo */
+  --c-cut-bg: #FFF4C9;      /* aviso «cortado» */
+
+  /* ---- Degradados de marca ---- */
+  --g-green: linear-gradient(120deg, rgb(182, 242, 196), rgb(143, 233, 196), rgb(140, 224, 224), rgb(191, 234, 252)); /* botones principales, logo, lupa */
+  --g-orange: linear-gradient(110deg, #FFE3BF 0%, #FFC59A 100%);   /* prioridad / súper interesante / días importantes */
+  --g-yellow: linear-gradient(135deg, #FFF4C9 0%, #FFE09A 100%);   /* opción seleccionada en switchers y filtros */
+  --g-gold: linear-gradient(120deg, #FFF3C2 0%, #F8DA7A 55%, #EDBE4F 100%); /* destacadas */
+
+  /* Pasteles de portada (debajo del halftone blanco) */
+  --p-green: linear-gradient(135deg, #D9F6E2, #B9EEDB);   /* tareas */
+  --p-yellow: linear-gradient(135deg, #FFF4C9, #FFE09A);  /* ideas */
+  --p-blue: linear-gradient(135deg, #DEECFF, #BCD6FA);    /* notas */
+  --p-lilac: linear-gradient(135deg, #EEE6FF, #D5C6F6);   /* varios */
+  --p-pink: linear-gradient(135deg, #FFE3EE, #F9C3D8);    /* cumpleaños, Mi hijo */
+
+  /* ---- Forma ---- */
+  --r-card: 6px;
+  --r-tile: 4px;      /* portadas pequeñas, etiquetas */
+  --r-pill: 999px;    /* botones, chips, buscador */
+  --sh-card: 0 22px 44px -26px rgba(30, 40, 40, 0.4);
+  --sh-card-m: 0 12px 26px -20px rgba(30, 40, 40, 0.45);
+  --sh-nav: 0 8px 20px -12px rgba(30, 40, 40, 0.35);
+  --sh-float: 0 6px 14px -8px rgba(30, 40, 40, 0.5);
+  --sh-cta: 0 10px 24px -14px rgba(30, 90, 70, 0.6);
+
+  /* ---- Espaciado y layout ---- */
+  --container: 1320px;
+  --gutter: clamp(16px, 3vw, 48px);
+  --gap-section: 26px;
+  --gap-grid: 22px;
+  --tap: 44px;        /* tamaño mínimo táctil */
+  --btn-h: 48px;
+  --field-h: 50px;
+  --card-min: 300px;  /* grid de tarjetas: repeat(auto-fill, minmax(300px, 1fr)) */
+  --cover-min: 240px; /* grid de colecciones */
+
+  /* ---- Breakpoints (usar en @media) ----
+     móvil  < 640px   → colecciones 2 por fila, barra inferior
+     tablet 640–1100px
+     escritorio > 1100px                                           */
+}
+
+/* ---- Halftone (assets en /public/halftone/) ---- */
+.ht   { background-repeat: no-repeat; }
+.ht-g { background: url(/halftone/white-07.svg) 62% 64% / auto 92% no-repeat, var(--p-green); }
+.ht-y { background: url(/halftone/white-07.svg) 62% 64% / auto 92% no-repeat, var(--p-yellow); }
+.ht-b { background: url(/halftone/white-07.svg) 62% 64% / auto 92% no-repeat, var(--p-blue); }
+.ht-l { background: url(/halftone/white-07.svg) 62% 64% / auto 92% no-repeat, var(--p-lilac); }
+.ht-p { background: url(/halftone/white-07.svg) 62% 64% / auto 92% no-repeat, var(--p-pink); }
+/* Destacada: brillo de halftone suave en la esquina inferior derecha */
+.gold { background: url(/halftone/soft-05.svg) right -40px bottom -46px / 150px auto no-repeat, var(--g-gold); }
+.ic svg * { vector-effect: non-scaling-stroke; }
+
+/* ---- Loader ---- */
+@keyframes ml-spin { to { transform: rotate(360deg); } }
+@keyframes ml-pulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+.ml-overlay { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: rgba(255,255,255,0.72); backdrop-filter: blur(2px); }
+.ml-loader {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(143,233,196,0) 0deg, rgb(143,233,196) 200deg, rgb(140,224,224) 300deg, rgb(191,234,252) 360deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 9px), #000 calc(100% - 8px));
+          mask: radial-gradient(farthest-side, transparent calc(100% - 9px), #000 calc(100% - 8px));
+  animation: ml-spin 1.6s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) { .ml-loader { animation: ml-pulse 2s ease-in-out infinite; } }
+/* Tiempos: mostrar tras 300 ms · abortar a los 20 s (AbortController) */
+
+/* ---- Cabecera móvil de listas (texto blanco) ---- */
+.m-head { background-image: linear-gradient(120deg, #2FA36F 0%, #179A86 55%, #1F8FA8 100%); color: #FFFFFF; border-radius: 0 0 14px 14px; }

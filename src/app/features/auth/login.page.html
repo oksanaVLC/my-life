@@ -1,0 +1,26 @@
+<div class="login">
+  <div class="login-art">
+    <app-logo />
+    <div class="login-collage">
+      @for (src of collage; track src) { <img [src]="src" alt="" /> }
+    </div>
+    <p class="login-claim">{{ 'login.claim' | t }}</p>
+  </div>
+  <div class="login-form-wrap">
+    <form class="login-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="between"><h1>{{ 'login.title' | t }}</h1><app-lang-select /></div>
+      <p class="lead">{{ 'login.lead' | t }}</p>
+      <div class="seg two" role="group" [attr.aria-label]="'login.how' | t">
+        <button type="button" [class.on]="mode() === 'password'" [attr.aria-pressed]="mode() === 'password'" (click)="mode.set('password')">{{ 'login.password' | t }}</button>
+        <button type="button" [class.on]="mode() === 'link'" [attr.aria-pressed]="mode() === 'link'" (click)="mode.set('link')">{{ 'login.link' | t }}</button>
+      </div>
+      <label class="field"><span class="lbl">{{ 'login.email' | t }}</span><input class="input" type="email" formControlName="email" autocomplete="email" /></label>
+      @if (mode() === 'password') {
+        <label class="field"><span class="lbl">{{ 'login.password' | t }}</span><input class="input" type="password" formControlName="password" autocomplete="current-password" /></label>
+      }
+      <button type="submit" class="btn primary block" [disabled]="busy()">{{ (mode() === 'password' ? 'login.enter' : 'login.send') | t }}</button>
+      @if (msg(); as m) { <p class="msg" [class.err]="m.kind === 'err'" role="status">{{ m.text }}</p> }
+      <p class="muted">{{ 'login.secure' | t }}</p>
+    </form>
+  </div>
+</div>

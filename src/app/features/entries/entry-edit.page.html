@@ -1,0 +1,86 @@
+@if (entry(); as e) {
+  <div class="page-head plain">
+    <div>
+      <app-crumbs [items]="crumbs()" />
+      <p class="save-note" role="status"><app-icon name="check" [size]="16" stroke="2.6" />{{ 'save.auto' | t }}</p>
+    </div>
+    <button type="button" class="btn" [class.primary]="e.done" [class.outline]="!e.done" (click)="patch({ done: !e.done })">
+      <app-icon name="check" [size]="18" stroke="2.6" />{{ (e.done ? 'entry.completed' : 'entry.markDone') | t }}
+    </button>
+  </div>
+
+  <div class="edit-layout">
+    <form class="card edit-main" [class.gold]="e.featured" [class.prio]="!e.featured && e.prio" [formGroup]="form" (submit)="$event.preventDefault()">
+      <div class="seg chips" role="group" [attr.aria-label]="'entry.type' | t">
+        @for (t of types; track t) {
+          <button type="button" class="chip-btn" [class.on]="e.type === t" [attr.aria-pressed]="e.type === t" (click)="patch({ type: t })">{{ 'type.' + t | t }}</button>
+        }
+      </div>
+      <label><span class="sr-only">{{ 'entry.title' | t }}</span>
+        <input class="title-input" formControlName="title" [placeholder]="'entry.untitled' | t" [class.strike]="e.done" />
+      </label>
+      <label class="field"><span class="lbl">{{ 'entry.body' | t }}</span>
+        <textarea formControlName="body" rows="4"></textarea>
+      </label>
+
+      <section class="field" aria-labelledby="h-steps">
+        <div class="between"><h2 id="h-steps" class="lbl">{{ 'entry.steps' | t }}</h2><span class="muted">{{ 'entry.stepsDone' | t: { done: doneSteps(e), total: e.steps.length } }}</span></div>
+        @for (s of e.steps; track $index) {
+          <label class="step"><input type="checkbox" [checked]="s.done" (change)="toggleStep($index)" /><span [class.strike]="s.done">{{ s.text }}</span></label>
+        }
+        <div class="row-gap">
+          <input class="input" [value]="newStep()" (input)="newStep.set(value($event))" (keydown.enter)="addStep($event)" [placeholder]="'entry.addStep' | t" [attr.aria-label]="'entry.addStep' | t" />
+          <button type="button" class="btn soft" (click)="addStep($event)"><app-icon name="plus" [size]="16" stroke="2.4" />{{ 'common.add' | t }}</button>
+        </div>
+      </section>
+
+      <section class="field" aria-labelledby="h-tags">
+        <h2 id="h-tags" class="lbl">{{ 'entry.tags' | t }}</h2>
+        <div class="row-gap wrap">
+          @for (t of e.tags; track t) {
+            <span class="chip tag-rm">{{ t }}<button type="button" (click)="removeTag(t)" [attr.aria-label]="'common.remove' | t: { what: t }"><app-icon name="x" [size]="14" stroke="2.4" /></button></span>
+          }
+          <input class="input sm" [value]="newTag()" (input)="newTag.set(value($event))" (keydown.enter)="addTag($event)" placeholder="#nueva" [attr.aria-label]="'entry.newTag' | t" />
+        </div>
+      </section>
+    </form>
+
+    <aside class="edit-side" [attr.aria-label]="'entry.details' | t">
+      <div class="card side-card">
+        <div class="feat-row"><app-star [on]="e.featured" (toggle)="patch({ featured: !e.featured })" /><span><strong>{{ (e.featured ? 'entry.featured' : 'entry.feature') | t }}</strong><small>{{ 'entry.featureHint' | t }}</small></span></div>
+
+        @if (e.type === 'task' || e.type === 'idea') {
+          <div class="field"><span class="lbl">{{ (e.type === 'task' ? 'entry.priority' : 'entry.interest') | t }}</span>
+            <div class="seg two" role="group">
+              <button type="button" [class.on-soft]="!e.prio" [attr.aria-pressed]="!e.prio" (click)="patch({ prio: false })">{{ (e.type === 'task' ? 'entry.noPrio' : 'entry.interesting') | t }}</button>
+              <button type="button" [class.on-orange]="e.prio" [attr.aria-pressed]="e.prio" (click)="patch({ prio: true })"><app-icon name="flag" [size]="16" />{{ (e.type === 'task' ? 'entry.prio' : 'entry.super') | t }}</button>
+            </div>
+          </div>
+        }
+
+        <div class="two-col" [formGroup]="form">
+          <label class="field"><span class="lbl">{{ 'entry.date' | t }}</span><input class="input" type="date" formControlName="date" /></label>
+          <label class="field"><span class="lbl">{{ 'entry.time' | t }}</span><input class="input" type="time" formControlName="time" /></label>
+        </div>
+        <label class="field" [formGroup]="form"><span class="lbl">{{ 'entry.collection' | t }}</span>
+          <select class="input" formControlName="collectionId">
+            <option value="">{{ 'entry.noCollection' | t }}</option>
+            @for (o of collections(); track o.id) { <option [value]="o.id">{{ o.label }}</option> }
+          </select>
+          <small class="muted">{{ 'entry.specialHint' | t }}</small>
+        </label>
+      </div>
+
+      <div class="card side-card">
+        @if (confirmDelete()) {
+          <p class="danger-text">{{ 'entry.confirmDelete' | t: { title: e.title || ('entry.untitled' | t) } }}</p>
+          <div class="row-gap"><button type="button" class="btn soft" (click)="confirmDelete.set(false)">{{ 'common.cancel' | t }}</button><button type="button" class="btn danger-solid" (click)="remove()">{{ 'entry.toTrash' | t }}</button></div>
+        } @else {
+          <button type="button" class="btn danger" (click)="confirmDelete.set(true)"><app-icon name="trash" [size]="18" />{{ 'entry.delete' | t }}</button>
+        }
+      </div>
+    </aside>
+  </div>
+} @else {
+  <div class="card empty"><h1>{{ 'notFound.title' | t }}</h1><a routerLink="/" class="btn primary">{{ 'notFound.home' | t }}</a></div>
+}

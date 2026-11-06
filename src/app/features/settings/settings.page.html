@@ -1,0 +1,47 @@
+<h1>{{ 'settings.title' | t }}</h1>
+
+<div class="settings">
+  <section class="card set-sec" aria-labelledby="h-lang">
+    <h2 id="h-lang"><app-icon name="globe" [size]="24" />{{ 'settings.language' | t }}</h2>
+    <div class="lang-grid" role="radiogroup" [attr.aria-label]="'settings.language' | t">
+      @for (l of langs; track l.code) {
+        <button type="button" role="radio" class="lang-opt" [class.on]="lang() === l.code" [attr.aria-checked]="lang() === l.code" (click)="setLang(l.code)">
+          <strong>{{ l.code.toUpperCase() }}</strong><span>{{ l.label }}</span>
+        </button>
+      }
+    </div>
+  </section>
+
+  <section class="card set-sec" aria-labelledby="h-home">
+    <h2 id="h-home"><app-icon name="home" [size]="24" />{{ 'settings.home' | t }}</h2>
+    @for (s of sections; track s) {
+      <div class="switch-row">
+        <span>{{ 'section.' + s | t }}</span>
+        <button type="button" role="switch" class="switch" [class.on]="store.settings().homeSections[s]" [attr.aria-checked]="store.settings().homeSections[s]" [attr.aria-label]="'section.' + s | t" (click)="toggleSection(s)"><span></span></button>
+      </div>
+    }
+    <a routerLink="/colecciones" class="btn outline">{{ 'settings.chooseHome' | t }}<app-icon name="chev" [size]="16" /></a>
+  </section>
+
+  <section class="card set-sec" aria-labelledby="h-cal">
+    <h2 id="h-cal"><app-icon name="cal" [size]="24" />{{ 'settings.calendar' | t }}</h2>
+    <div class="switch-row"><span>{{ 'settings.weekMonday' | t }}</span><button type="button" role="switch" class="switch" [class.on]="store.settings().weekStartsMonday" [attr.aria-checked]="store.settings().weekStartsMonday" [attr.aria-label]="'settings.weekMonday' | t" (click)="toggle('weekStartsMonday')"><span></span></button></div>
+    <div class="switch-row"><span>{{ 'settings.bdays' | t }}</span><button type="button" role="switch" class="switch" [class.on]="store.settings().showBirthdaysInCalendar" [attr.aria-checked]="store.settings().showBirthdaysInCalendar" [attr.aria-label]="'settings.bdays' | t" (click)="toggle('showBirthdaysInCalendar')"><span></span></button></div>
+  </section>
+
+  <section class="card set-sec" aria-labelledby="h-data">
+    <h2 id="h-data"><app-icon name="download" [size]="24" />{{ 'settings.data' | t }}</h2>
+    <p class="ok-box">{{ (auth.demo ? 'settings.dataDemo' : 'settings.dataText') | t }}</p>
+    <div class="row-gap wrap">
+      <button type="button" class="btn outline" (click)="exportJson()"><app-icon name="download" [size]="18" />{{ 'settings.export' | t }}</button>
+      <a routerLink="/papelera" class="btn soft"><app-icon name="trash" [size]="18" />{{ 'settings.trash' | t }} · {{ store.trash().length }}</a>
+    </div>
+    @if (exported()) { <p role="status" class="ok-text">{{ 'settings.exported' | t }}</p> }
+  </section>
+
+  <section class="card set-sec" aria-labelledby="h-acc">
+    <h2 id="h-acc"><app-icon name="user" [size]="24" />{{ 'settings.account' | t }}</h2>
+    <p>{{ auth.demo ? ('settings.demoAccount' | t) : auth.email() }}</p>
+    @if (!auth.demo) { <button type="button" class="btn danger" (click)="auth.signOut()">{{ 'settings.signOut' | t }}</button> }
+  </section>
+</div>
