@@ -79,3 +79,46 @@ export type HomeSection = 'calendar' | 'collage' | 'quote' | 'featured' | 'main'
 
 export const TRASH_DAYS = 30;
 export const HOME_COLLECTIONS = 12;
+
+/* ------------------------------------------------------------------ recetas */
+export type RecipeCategory = 'breakfast' | 'lunch' | 'dinner' | 'dessert';
+export type Difficulty = 'easy' | 'medium' | 'hard';
+export type RecipeSource = 'own' | 'link' | 'capture';
+
+export interface CookLog {
+  /** AAAA-MM-DD */
+  date: string;
+  note?: string;
+}
+
+export interface Recipe {
+  id: string;
+  title: string;
+  description: string;
+  category: RecipeCategory;
+  difficulty: Difficulty;
+  /** minutos */
+  minutes?: number;
+  servings: number;
+  /** una línea por ingrediente, tal como se escribe: «250 g harina de trigo» */
+  ingredients: string[];
+  steps: string[];
+  notes: string;
+  tags: string[];
+  source: RecipeSource;
+  sourceUrl?: string;
+  /** la primera es la principal */
+  photos: ImageRef[];
+  /** 0 = sin valorar, 1–5 estrellas */
+  rating: number;
+  favorite: boolean;
+  /** veces que la hice, la más reciente primero */
+  cooked: CookLog[];
+  collectionId?: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+}
+
+export const RECIPE_CATEGORIES: RecipeCategory[] = ['breakfast', 'lunch', 'dinner', 'dessert'];
+export const DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard'];

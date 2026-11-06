@@ -58,13 +58,37 @@
         <label class="check-row"><input type="checkbox" formControlName="home" />{{ 'collectionNew.showHome' | t }}</label>
       }
       @if (error()) { <p class="alert" role="alert">{{ error() }}</p> }
-      <div class="row-gap">
-        <button type="submit" class="btn primary" [disabled]="busy()">
-          <app-icon [name]="isEdit() ? 'check' : 'plus'" [size]="18" stroke="2.4" />
-          {{ (busy() ? 'cover.uploading' : isEdit() ? 'common.save' : 'collectionNew.create') | t }}
-        </button>
-        <a [routerLink]="editing() ? '/colecciones/' + editing()!.id : '/colecciones'" class="btn soft">{{ 'common.cancel' | t }}</a>
-      </div>
+      @if (confirmDelete() && contents(); as n) {
+        <div class="confirm-box" role="alertdialog" aria-labelledby="del-q" aria-describedby="del-d">
+          <p id="del-q" class="danger-text"><strong>{{ 'collectionEdit.confirm' | t: { name: editing()!.name } }}</strong></p>
+          <p id="del-d">
+            @if (n.folders || n.entries || n.recipes) {
+              {{ 'collectionEdit.goesWith' | t }}
+              @if (n.folders) { {{ 'collection.subCount' | tp: n.folders }}@if (n.entries || n.recipes) {, } }
+              @if (n.entries) { {{ 'entries.count' | tp: n.entries }}@if (n.recipes) {, } }
+              @if (n.recipes) { {{ 'recipes.count' | tp: n.recipes }} }.
+            }
+            {{ 'collectionEdit.restoreHint' | t }}
+          </p>
+          <div class="row-gap">
+            <button type="button" class="btn soft" (click)="confirmDelete.set(false)">{{ 'common.cancel' | t }}</button>
+            <button type="button" class="btn danger-solid" (click)="remove()"><app-icon name="trash" [size]="18" />{{ 'entry.toTrash' | t }}</button>
+          </div>
+        </div>
+      } @else {
+        <div class="between wrap">
+          <div class="row-gap">
+            <button type="submit" class="btn primary" [disabled]="busy()">
+              <app-icon [name]="isEdit() ? 'check' : 'plus'" [size]="18" stroke="2.4" />
+              {{ (busy() ? 'cover.uploading' : isEdit() ? 'common.save' : 'collectionNew.create') | t }}
+            </button>
+            <a [routerLink]="editing() ? '/colecciones/' + editing()!.id : '/colecciones'" class="btn soft">{{ 'common.cancel' | t }}</a>
+          </div>
+          @if (isEdit()) {
+            <button type="button" class="btn danger" [disabled]="busy()" (click)="confirmDelete.set(true)"><app-icon name="trash" [size]="18" />{{ 'collectionEdit.delete' | t }}</button>
+          }
+        </div>
+      }
     </form>
 
     <aside class="edit-side" [attr.aria-label]="'collectionNew.preview' | t">

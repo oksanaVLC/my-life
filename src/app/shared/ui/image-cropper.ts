@@ -78,6 +78,9 @@ export class ImageCropper {
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate((this.rotation() * Math.PI) / 180);
+    // Fondo blanco debajo: las zonas transparentes (PNG) no salen negras al guardar en JPEG.
+    ctx.fillStyle = '#fff';
+    ctx.fillRect((-img.width * s) / 2, (-img.height * s) / 2, img.width * s, img.height * s);
     ctx.drawImage(img, (-img.width * s) / 2, (-img.height * s) / 2, img.width * s, img.height * s);
     ctx.restore();
   }

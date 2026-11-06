@@ -18,7 +18,7 @@ Sin claves, la app arranca en **modo demo**: usa datos de ejemplo y lo guarda to
 ## Conectar Supabase (datos)
 
 1. Crea un proyecto en [supabase.com](https://supabase.com).
-2. Abre **SQL Editor** y ejecuta `supabase/migrations/0001_init.sql`. El script crea:
+2. Abre **SQL Editor** y ejecuta `supabase/migrations/0001_init.sql` y después `0002_recipes.sql` (recetas). El script crea:
    - las tablas `entries`, `collections` y `settings`;
    - la seguridad RLS (cada fila es solo de su dueña);
    - la búsqueda sin acentos;
@@ -100,11 +100,12 @@ El idioma se cambia sin recargar, se guarda en el dispositivo y en tus ajustes. 
 - Editar entrada y editar nota, que se guardan solas.
 - Colecciones: reordenar las 12 de Inicio, abrir una colección (subcarpetas, tarjetas especiales que se pueden renombrar y aceptan arrastrar, selección, mover) y crear una nueva.
 - Buscar, Ajustes, Papelera y Login.
+- Editar colección (nombre, carpeta, tipo, portada con icono o foto recortada, Inicio).
+- Recetas: lista con filtros, búsqueda por ingrediente, estrellas y favoritas; nueva/editar con fotos (Cloudinary), ingredientes y pasos; ver receta con raciones que recalculan los ingredientes y «¿Cuándo la hice?».
 - Modo demo, cola sin conexión, tres idiomas, PWA y tests.
 
 **Pendiente (ver el PDF de diseño):**
 - Pantallas especiales:
-  - Recetas y Ver receta (fecha en que la hice e historial);
   - Cumpleaños y fechas, y Futuros regalos;
   - Torneos;
   - Enlaces de Diseño;

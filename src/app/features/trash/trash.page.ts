@@ -1,10 +1,12 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Store } from '../../core/data/store';
-import { Entry, TRASH_DAYS } from '../../core/data/models';
+import { TRASH_DAYS } from '../../core/data/models';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TPipe, TPluralPipe } from '../../core/i18n/t.pipe';
 import { Empty } from '../../shared/ui/controls';
 import { Icon } from '../../shared/ui/icon';
+
+interface TrashItem { kind: 'entry' | 'recipe' | 'collection'; id: string; title: string; label: string; where: string; deletedAt?: string }
 
 /** Papelera: lo borrado se guarda 30 días; se puede recuperar o eliminar para siempre. */
 @Component({
@@ -24,9 +26,9 @@ import { Icon } from '../../shared/ui/icon';
     @if (toast()) { <p class="toast" role="status">{{ toast() }}</p> }
     @if (items().length) {
       <div class="card list">
-        @for (e of items(); track e.id) {
+        @for (e of items(); track e.kind + e.id) {
           <div class="list-row">
-            <span class="grow"><strong>{{ e.title || ('entry.untitled' | t) }}</strong><small>{{ 'type.' + e.type | t }}@if (where(e)) { · {{ where(e) }} }</small></span>
+            <span class="grow"><strong>{{ e.title || ((e.kind === 'recipe' ? 'recipe.untitled' : 'entry.untitled') | t) }}</strong><small>{{ e.label | t }}@if (e.where) { · {{ e.where }} }</small></span>
             <span class="trash-left" [class.soon]="store.daysLeft(e) <= 5">{{ 'trash.left' | tp: store.daysLeft(e) }}</span>
             <button type="button" class="btn outline sm" (click)="restore(e)"><app-icon name="restore" [size]="16" />{{ 'trash.restore' | t }}</button>
             <button type="button" class="round danger" (click)="kill(e)" [attr.aria-label]="'trash.forever' | t: { title: e.title }"><app-icon name="trash" [size]="18" /></button>
@@ -43,16 +45,33 @@ export class TrashPage {
   protected readonly days = TRASH_DAYS;
   protected readonly confirm = signal(false);
   protected readonly toast = signal('');
-  protected readonly items = computed(() => [...this.store.trash()].sort((a, b) => (b.deletedAt ?? '').localeCompare(a.deletedAt ?? '')));
-  protected where(e: Entry): string {
-    return this.store.path(e.collectionId).map((c) => c.name).join(' › ');
+  /** Entradas y recetas borradas, juntas, la más reciente primero. */
+  protected readonly items = computed<TrashItem[]>(() => {
+    const where = (id?: string) => this.store.path(id).map((c) => c.name).join(' › ');
+    // Lo que se borró junto con una colección va dentro de ella (no sale suelto).
+    const goneWith = new Set(this.store.collectionTrash().map((c) => c.deletedAt));
+    const inTrashed = (x: { deletedAt?: string }) => goneWith.has(x.deletedAt);
+    return [
+      ...this.store.collectionTrash().map((c) => {
+        const n = this.inside(c.id, c.deletedAt);
+        return { kind: 'collection' as const, id: c.id, title: c.name, label: 'trash.collection', where: n ? this.i18n.plural('entries.count', n) : '', deletedAt: c.deletedAt };
+      }),
+      ...this.store.trash().filter((e) => !inTrashed(e)).map((e) => ({ kind: 'entry' as const, id: e.id, title: e.title, label: 'type.' + e.type, where: where(e.collectionId), deletedAt: e.deletedAt })),
+      ...this.store.recipeTrash().filter((r) => !inTrashed(r)).map((r) => ({ kind: 'recipe' as const, id: r.id, title: r.title, label: 'recipe.one', where: where(r.collectionId), deletedAt: r.deletedAt })),
+    ].sort((a, b) => (b.deletedAt ?? '').localeCompare(a.deletedAt ?? ''));
+  });
+  /** Entradas y recetas que se fueron con esa colección */
+  private inside(id: string, ts?: string): number {
+    return this.store.trash().filter((e) => e.deletedAt === ts).length + this.store.recipeTrash().filter((r) => r.deletedAt === ts).length;
   }
-  protected restore(e: Entry): void {
-    this.store.restore(e.id);
+  protected restore(e: TrashItem): void {
+    if (e.kind === 'collection') this.store.restoreCollection(e.id);
+    else if (e.kind === 'recipe') this.store.restoreRecipe(e.id);
+    else this.store.restore(e.id);
     this.toast.set(this.i18n.t('trash.restored', { title: e.title }));
   }
-  protected kill(e: Entry): void {
-    void this.store.deleteForever(e.id);
+  protected kill(e: TrashItem): void {
+    void (e.kind === 'collection' ? this.store.deleteCollectionForever(e.id) : e.kind === 'recipe' ? this.store.deleteRecipeForever(e.id) : this.store.deleteForever(e.id));
     this.toast.set(this.i18n.t('trash.killed', { title: e.title }));
   }
   protected emptyAll(): void {

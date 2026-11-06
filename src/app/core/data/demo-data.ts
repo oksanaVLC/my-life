@@ -1,4 +1,4 @@
-import { Collection, Entry } from './models';
+import { Collection, Entry, Recipe } from './models';
 
 const now = '2026-11-04T10:00:00.000Z';
 const c = (id: string, name: string, cover: Collection['cover'], extra: Partial<Collection> = {}): Collection => ({
@@ -16,7 +16,7 @@ export const DEMO_COLLECTIONS: Collection[] = [
   c('maxstudio', 'Max Studio', { kind: 'logo', value: 'img/covers/maxstudio.png' }, { homeOrder: 6, updatedAt: '2026-10-25T10:00:00Z' }),
   c('dibujos', 'Dibujos', { kind: 'img', value: 'img/covers/dibujos.webp' }, { homeOrder: 7, updatedAt: '2026-10-12T10:00:00Z' }),
   c('torneos', 'Torneos', { kind: 'icon', value: 'chess', tint: 'l' }, { homeOrder: 8, kind: 'tournaments', updatedAt: '2026-10-19T10:00:00Z' }),
-  c('recetas', 'Recetas', { kind: 'img', value: 'img/covers/crepes.jpg' }, { homeOrder: 9, kind: 'recipes', parentId: undefined, updatedAt: '2026-10-27T10:00:00Z' }),
+  c('recetas', 'Recetas', { kind: 'img', value: 'img/covers/crepes.jpg' }, { homeOrder: 9, kind: 'recipes', route: '/recetas', parentId: undefined, updatedAt: '2026-10-27T10:00:00Z' }),
   c('busqueda', 'Búsqueda de trabajo', { kind: 'icon', value: 'job', tint: 'g' }, { homeOrder: 10, updatedAt: '2026-11-03T10:00:00Z' }),
   c('cumples', 'Cumpleaños', { kind: 'icon', value: 'cake', tint: 'p' }, { homeOrder: 11, kind: 'birthdays', updatedAt: '2026-10-26T10:00:00Z' }),
   c('salud', 'Salud', { kind: 'icon', value: 'health', tint: 'b' }, { updatedAt: '2026-10-15T10:00:00Z' }),
@@ -71,4 +71,29 @@ export const DEMO_ENTRIES: Entry[] = [
   e('none', 'Lista de la compra semanal', 'Fruta, yogures, pan integral, detergente.', '2026-10-31', 'casa-compras', { tags: ['#súper'] }),
   e('none', 'Equipo de grabación', 'Micrófono de solapa, aro de luz, trípode.', '2026-10-20', 'youtube'),
   e('task', 'Comprar pilas para el mando', '', '2026-11-02', 'casa', { deletedAt: '2026-11-02T10:00:00Z' }),
+];
+
+/* ------------------------------------------------------------------ recetas de ejemplo */
+const r = (id: string, title: string, extra: Partial<Recipe>): Recipe => ({
+  id, title, description: '', category: 'lunch', difficulty: 'easy', servings: 4, ingredients: [], steps: [], notes: '', tags: [],
+  source: 'own', photos: [], rating: 0, favorite: false, cooked: [], collectionId: 'recetas',
+  createdAt: '2026-09-01T10:00:00Z', updatedAt: '2026-10-27T10:00:00Z', ...extra,
+});
+const photo = (file: string) => [{ publicId: 'demo-' + file, url: 'img/covers/' + file }];
+
+export const DEMO_RECIPES: Recipe[] = [
+  r('rc-crepes', 'Crepes de la abuela', {
+    category: 'breakfast', minutes: 25, servings: 4, rating: 5, favorite: true, photos: photo('crepes.jpg'), tags: ['#dulce'],
+    ingredients: ['250 g harina de trigo', '500 ml leche', '3 huevos', '1 cda azúcar', '30 g mantequilla derretida', '1 pizca sal'],
+    steps: ['Bate los huevos con el azúcar y la sal.', 'Añade la harina poco a poco, alternando con la leche, hasta que no queden grumos.', 'Incorpora la mantequilla derretida y deja reposar la masa 15 minutos.', 'Calienta una sartén antiadherente a fuego medio y engrásala un poco.', 'Vierte un cucharón fino de masa, gira la sartén y cocina 1 minuto por cada lado.', 'Sirve con fresas, nata o mermelada.'],
+    notes: 'Con leche de avena también salen bien. La primera crepe siempre sale fea.',
+    cooked: [{ date: '2026-10-27', note: 'Desayuno del domingo, con fresas' }, { date: '2026-09-14', note: 'Doble cantidad para la merienda del cole' }, { date: '2026-07-02' }],
+  }),
+  r('rc-crema', 'Crema de calabaza', { category: 'dinner', minutes: 40, rating: 4, source: 'link', sourceUrl: 'https://example.com/crema-calabaza', photos: photo('crema.svg'), ingredients: ['1 kg calabaza', '1 cebolla', '2 zanahorias', '500 ml caldo de verduras', 'sal y pimienta'], steps: ['Pocha la cebolla.', 'Añade la calabaza y la zanahoria troceadas y el caldo.', 'Cuece 25 minutos y tritura.'] }),
+  r('rc-lentejas', 'Lentejas de la abuela', { category: 'lunch', minutes: 60, servings: 6, difficulty: 'medium', rating: 5, favorite: true, photos: photo('lentejas.svg'), ingredients: ['400 g lentejas', '1 chorizo', '2 zanahorias', '1 pimiento', '2 dientes ajo', '1 cdta pimentón'], steps: ['Sofríe las verduras.', 'Añade las lentejas, el chorizo y agua.', 'Cuece a fuego lento 45 minutos.'] }),
+  r('rc-ensalada', 'Ensalada de tomate y burrata', { category: 'dinner', minutes: 10, servings: 2, rating: 3, source: 'capture', photos: photo('ensalada.svg'), ingredients: ['3 tomates', '1 burrata', 'albahaca', 'aceite de oliva'] }),
+  r('rc-tortitas', 'Tortitas de avena y plátano', { category: 'breakfast', minutes: 20, servings: 2, rating: 4, source: 'link', sourceUrl: 'https://example.com/tortitas', photos: photo('tortitas.svg'), ingredients: ['1 plátano', '2 huevos', '60 g copos de avena'] }),
+  r('rc-sopa', 'Sopa de verduras', { category: 'dinner', minutes: 35, ingredients: ['2 puerros', '2 patatas', '1 calabacín', '1 l caldo'] }),
+  r('rc-garbanzos', 'Guiso de garbanzos', { category: 'lunch', minutes: 50, difficulty: 'medium', rating: 4, source: 'link', photos: photo('lentejas.svg') }),
+  r('rc-quinoa', 'Bol de quinoa y aguacate', { category: 'lunch', minutes: 20, servings: 2, source: 'capture' }),
 ];

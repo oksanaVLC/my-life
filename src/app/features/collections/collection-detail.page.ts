@@ -1,5 +1,5 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { Store, yearOf } from '../../core/data/store';
 import { Collection, EntryType } from '../../core/data/models';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -27,6 +27,15 @@ export class CollectionDetailPage {
   readonly id = input.required<string>();
 
   protected readonly col = computed(() => this.store.collection(this.id()));
+
+  constructor() {
+    // Las colecciones con pantalla propia (p. ej. Recetas) se abren allí.
+    const router = inject(Router);
+    effect(() => {
+      const route = this.col()?.route;
+      if (route) void router.navigateByUrl(route, { replaceUrl: true });
+    });
+  }
   protected readonly crumbs = computed(() => [
     { label: this.i18n.t('nav.collections'), link: '/colecciones' },
     ...this.store.path(this.id()).map((c) => ({ label: c.name, link: '/colecciones/' + c.id })),

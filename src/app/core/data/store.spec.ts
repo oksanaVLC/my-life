@@ -16,11 +16,15 @@ describe('Store', () => {
       loadAll: async () => ({
         entries: [entry('a'), entry('b')],
         collections: Array.from({ length: 14 }, (_, i) => coll('c' + i, i < 12 ? i : undefined)),
+        recipes: [],
         settings: null,
       }),
       upsertEntry: async (e) => { saved.push(e); },
       upsertCollection: async () => {},
+      deleteCollectionForever: async () => {},
       deleteEntryForever: async () => {},
+      upsertRecipe: async () => {},
+      deleteRecipeForever: async () => {},
       saveSettings: async () => {},
     };
     TestBed.configureTestingModule({ providers: [{ provide: BACKEND, useValue: fake }] });
@@ -28,14 +32,27 @@ describe('Store', () => {
     await store.load();
   });
 
-  it('la papelera guarda la entrada y la quita de la lista', () => {
+  it('la papelera guarda la entrada y la quita de la lista', async () => {
     store.moveToTrash('a');
+    await new Promise((r) => setTimeout(r)); // los guardados van en cola
     expect(store.entries().map((e) => e.id)).toEqual(['b']);
     expect(store.trash().map((e) => e.id)).toEqual(['a']);
     expect(store.daysLeft(store.trash()[0])).toBe(30);
     expect(saved.at(-1)?.deletedAt).toBeTruthy();
     store.restore('a');
     expect(store.trash()).toEqual([]);
+  });
+
+  it('los guardados llegan en orden aunque el primero tarde más', async () => {
+    const order: string[] = [];
+    (TestBed.inject(BACKEND) as Backend).upsertEntry = async (e) => {
+      await new Promise((r) => setTimeout(r, e.title === 'lento' ? 30 : 0));
+      order.push(e.title);
+    };
+    store.updateEntry('a', { title: 'lento' });
+    store.updateEntry('a', { title: 'rápido' });
+    await new Promise((r) => setTimeout(r, 60));
+    expect(order).toEqual(['lento', 'rápido']);
   });
 
   it('en Inicio salen como máximo 12 colecciones, en el orden elegido', () => {

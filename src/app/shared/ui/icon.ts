@@ -46,6 +46,10 @@ export const ICONS: Record<string, string> = {
   wifi: '<path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0"/><circle cx="12" cy="19" r="1.2"/>',
   link: '<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.2 1.2"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/>',
   chart: '<path d="M4 20V10M10 20V4M16 20v-7M2 20h20"/>',
+  cloche: '<path d="M3 18h18M4.5 18a7.5 7.5 0 0 1 15 0M12 10.5V9M10.5 9h3M8.5 6c-.6-.7-.6-1.5 0-2.2M12 6c-.6-.7-.6-1.5 0-2.2M15.5 6c-.6-.7-.6-1.5 0-2.2"/>',
+  image: '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M20.5 16l-5-5-8.5 8.5"/>',
+  minus: '<path d="M5 12h14"/>',
+  external: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
   dots: '<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>',
 };
 

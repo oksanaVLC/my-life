@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { BACKEND } from './backend';
 import { LoadingService } from '../loading/loading.service';
-import { Collection, Entry, EntryType, HOME_COLLECTIONS, Settings, TRASH_DAYS } from './models';
+import { Collection, Entry, EntryType, HOME_COLLECTIONS, Recipe, Settings, TRASH_DAYS } from './models';
 
 const DEFAULT_SETTINGS: Settings = {
   lang: 'es',
@@ -27,6 +27,7 @@ export class Store {
 
   private readonly _entries = signal<Entry[]>([]);
   private readonly _collections = signal<Collection[]>([]);
+  private readonly _recipes = signal<Recipe[]>([]);
   readonly settings = signal<Settings>(DEFAULT_SETTINGS);
   readonly saveState = signal<SaveState>('saved');
   readonly loaded = signal(false);
@@ -41,6 +42,16 @@ export class Store {
       .filter((c) => c.homeOrder !== undefined && c.homeOrder < HOME_COLLECTIONS)
       .sort((a, b) => (a.homeOrder ?? 0) - (b.homeOrder ?? 0)),
   );
+  readonly recipes = computed(() => this._recipes().filter((r) => !r.deletedAt));
+  /** Colecciones borradas (solo la de arriba de cada borrado; sus subcarpetas van con ella). */
+  readonly collectionTrash = computed(() => {
+    const all = this._collections();
+    const deleted = new Set(all.filter((c) => c.deletedAt).map((c) => c.id));
+    return all.filter((c) => c.deletedAt && !(c.parentId && deleted.has(c.parentId)));
+  });
+  readonly recipeTrash = computed(() => this._recipes().filter((r) => !!r.deletedAt));
+  /** La colección «Recetas» (la primera de tipo recetas), para las migas y como colección por defecto. */
+  readonly recipesCollection = computed(() => this.collections().find((c) => c.kind === 'recipes'));
   readonly featured = computed(() => this.entries().filter((e) => e.featured));
   readonly years = computed(() => {
     const ys = new Set(this.entries().map(yearOf));
@@ -53,6 +64,12 @@ export class Store {
     const data = await this.loading.track((signal) => this.backend.loadAll(signal), () => void this.load());
     this._entries.set(data.entries);
     this._collections.set(data.collections);
+    this._recipes.set(data.recipes);
+    // Recetas nuevas que se quedaron vacías (se cerró la ventana sin escribir nada): fuera.
+    const old = Date.now() - 10 * 60_000;
+    for (const r of data.recipes) {
+      if (!r.title.trim() && !r.ingredients.length && !r.steps.length && !r.photos.length && new Date(r.createdAt).getTime() < old) void this.deleteRecipeForever(r.id);
+    }
     if (data.settings) this.settings.set({ ...DEFAULT_SETTINGS, ...data.settings });
     this.loaded.set(true);
   }
@@ -118,8 +135,65 @@ export class Store {
   }
   async emptyTrash(): Promise<void> {
     for (const e of this.trash()) await this.deleteForever(e.id);
+    for (const r of this.recipeTrash()) await this.deleteRecipeForever(r.id);
+    for (const c of this.collectionTrash()) await this.deleteCollectionForever(c.id);
   }
-  daysLeft(e: Entry): number {
+
+  /* ---------------- borrar colecciones (con todo lo que tienen dentro) */
+  /** Ids de la colección y sus subcarpetas, también las borradas. */
+  private allSubtree(id: string): string[] {
+    const ids = [id];
+    for (const ch of this._collections().filter((c) => c.parentId === id)) ids.push(...this.allSubtree(ch.id));
+    return ids;
+  }
+
+  /** Lo que se irá con ella a la papelera. */
+  collectionContents(id: string): { folders: number; entries: number; recipes: number } {
+    const ids = new Set(this.subtree(id));
+    return {
+      folders: ids.size - 1,
+      entries: this.entries().filter((e) => e.collectionId && ids.has(e.collectionId)).length,
+      recipes: this.collection(id)?.kind === 'recipes' ? this.recipes().filter((r) => !r.collectionId || ids.has(r.collectionId)).length : 0,
+    };
+  }
+
+  /**
+   * A la papelera: la colección, sus subcarpetas y sus entradas, todo con la misma hora,
+   * para poder recuperarlo junto. Las recetas solo se van si es la colección de Recetas.
+   */
+  trashCollection(id: string): void {
+    const ts = new Date().toISOString();
+    const ids = new Set(this.subtree(id));
+    const isRecipes = this.collection(id)?.kind === 'recipes';
+    for (const cid of ids) this.updateCollection(cid, { deletedAt: ts });
+    for (const e of this.entries()) if (e.collectionId && ids.has(e.collectionId)) this.updateEntry(e.id, { deletedAt: ts });
+    if (isRecipes) for (const r of this.recipes()) if (!r.collectionId || ids.has(r.collectionId)) this.updateRecipe(r.id, { deletedAt: ts });
+  }
+
+  restoreCollection(id: string): void {
+    const ts = this._collections().find((c) => c.id === id)?.deletedAt;
+    if (!ts) return;
+    const ids = new Set(this.allSubtree(id));
+    for (const c of this._collections()) if (ids.has(c.id) && c.deletedAt === ts) this.updateCollection(c.id, { deletedAt: undefined });
+    for (const e of this._entries()) if (e.deletedAt === ts && e.collectionId && ids.has(e.collectionId)) this.updateEntry(e.id, { deletedAt: undefined });
+    for (const r of this._recipes()) if (r.deletedAt === ts) this.updateRecipe(r.id, { deletedAt: undefined });
+  }
+
+  async deleteCollectionForever(id: string): Promise<void> {
+    const ids = this.allSubtree(id);
+    const set = new Set(ids);
+    for (const e of this._entries().filter((x) => x.collectionId && set.has(x.collectionId))) {
+      if (e.deletedAt) await this.deleteForever(e.id); else this.updateEntry(e.id, { collectionId: undefined });
+    }
+    for (const r of this._recipes().filter((x) => x.collectionId && set.has(x.collectionId))) {
+      if (r.deletedAt) await this.deleteRecipeForever(r.id); else this.updateRecipe(r.id, { collectionId: undefined });
+    }
+    for (const cid of ids.reverse()) {
+      this._collections.update((l) => l.filter((c) => c.id !== cid));
+      await this.run(() => this.backend.deleteCollectionForever(cid));
+    }
+  }
+  daysLeft(e: { deletedAt?: string }): number {
     if (!e.deletedAt) return TRASH_DAYS;
     const used = Math.floor((Date.now() - new Date(e.deletedAt).getTime()) / 86_400_000);
     return Math.max(0, TRASH_DAYS - used);
@@ -157,9 +231,44 @@ export class Store {
     void this.run(() => this.backend.saveSettings(s));
   }
 
+  /* ---------------- recetas */
+  recipe(id: string): Recipe | undefined {
+    return this._recipes().find((r) => r.id === id);
+  }
+
+  newRecipe(): Recipe {
+    const ts = new Date().toISOString();
+    const r: Recipe = {
+      id: uid(), title: '', description: '', category: 'lunch', difficulty: 'easy', servings: 4, ingredients: [], steps: [], notes: '',
+      tags: [], source: 'own', photos: [], rating: 0, favorite: false, cooked: [], collectionId: this.recipesCollection()?.id, createdAt: ts, updatedAt: ts,
+    };
+    this._recipes.update((l) => [r, ...l]);
+    void this.run(() => this.backend.upsertRecipe(r));
+    return r;
+  }
+
+  updateRecipe(id: string, patch: Partial<Recipe>): void {
+    let next: Recipe | undefined;
+    this._recipes.update((l) => l.map((r) => (r.id === id ? (next = { ...r, ...patch, updatedAt: new Date().toISOString() }) : r)));
+    if (next) { const n = next; void this.run(() => this.backend.upsertRecipe(n)); }
+  }
+
+  /** Volver a un estado anterior entero (para «Descartar»). */
+  replaceRecipe(r: Recipe): void {
+    this._recipes.update((l) => l.map((x) => (x.id === r.id ? r : x)));
+    void this.run(() => this.backend.upsertRecipe(r));
+  }
+
+  recipeToTrash(id: string): void { this.updateRecipe(id, { deletedAt: new Date().toISOString() }); }
+  restoreRecipe(id: string): void { this.updateRecipe(id, { deletedAt: undefined }); }
+  async deleteRecipeForever(id: string): Promise<void> {
+    this._recipes.update((l) => l.filter((r) => r.id !== id));
+    await this.run(() => this.backend.deleteRecipeForever(id));
+  }
+
   /** Copia de seguridad completa en JSON. */
   exportJson(): string {
-    return JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), settings: this.settings(), collections: this._collections(), entries: this._entries() }, null, 2);
+    return JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), settings: this.settings(), collections: this._collections(), entries: this._entries(), recipes: this._recipes() }, null, 2);
   }
 
   private persistEntry(e: Entry): Promise<void> {
@@ -180,13 +289,22 @@ export class Store {
     }
   }
 
-  private async run(fn: () => Promise<void>): Promise<void> {
+  /** Los guardados salen de uno en uno y en orden: así uno antiguo nunca pisa a uno más nuevo. */
+  private chain: Promise<void> = Promise.resolve();
+
+  private run(fn: () => Promise<void>): Promise<void> {
+    this.chain = this.chain.then(() => this.exec(fn));
+    return this.chain;
+  }
+
+  private async exec(fn: () => Promise<void>): Promise<void> {
     if (!navigator.onLine) { this.queue.push(fn); this.saveState.set('offline'); return; }
     this.saveState.set('saving');
     try {
       await fn();
       this.saveState.set('saved');
-    } catch {
+    } catch (err) {
+      console.error('No se ha podido guardar en Supabase:', err);
       this.saveState.set('error');
     }
   }

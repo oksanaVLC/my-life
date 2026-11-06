@@ -1,0 +1,117 @@
+@if (missing()) {
+  <app-empty icon="cloche" [title]="'recipe.notFound' | t" [text]="'notFound.text' | t"><a routerLink="/recetas" class="btn primary">{{ 'recipe.back' | t }}</a></app-empty>
+} @else if (recipe(); as r) {
+  <app-crumbs [items]="crumbs()" />
+
+  <div class="recipe-view">
+    <div class="rv-side">
+      <div class="rv-photo">
+        @if (photo(); as p) { <img [src]="p" [alt]="r.title" /> }
+        @else { <span class="rc-empty"><app-icon name="cloche" [size]="110" color="#fff" /></span> }
+      </div>
+      @if (r.photos.length > 1) {
+        <div class="rv-thumbs" role="group" [attr.aria-label]="'recipe.photos' | t">
+          @for (p of r.photos; track p.publicId; let i = $index) {
+            <button type="button" [class.on]="i === photoIndex()" [attr.aria-pressed]="i === photoIndex()" (click)="photoIndex.set(i)" [attr.aria-label]="'recipe.photoN' | t: { n: i + 1 }">
+              <img [src]="thumb(p.url)" alt="" />
+            </button>
+          }
+        </div>
+      }
+
+      <section class="card rv-cooked" aria-labelledby="h-cooked">
+        <div class="between wrap">
+          <h2 id="h-cooked">{{ 'recipe.whenTitle' | t }}</h2>
+          <span class="muted">
+            @if (cooked().length) { {{ 'recipe.timesMade' | tp: cooked().length }} · {{ 'recipe.last' | t: { date: fmtDate(cooked()[0].date) } }} }
+            @else { {{ 'recipe.neverMade' | t }} }
+          </span>
+        </div>
+        <form class="cook-form" (submit)="saveCook($event)">
+          <label class="field"><span class="lbl">{{ 'entry.date' | t }}</span>
+            <input class="input" type="date" [value]="cookDate()" (input)="cookDate.set(value($event))" required />
+          </label>
+          <label class="field"><span class="lbl">{{ 'recipe.noteOptional' | t }}</span>
+            <input class="input" [value]="cookNote()" (input)="cookNote.set(value($event))" [placeholder]="'recipe.cookNotePh' | t" maxlength="140" />
+          </label>
+          <button type="submit" class="btn primary"><app-icon name="check" [size]="18" stroke="2.6" />{{ 'common.save' | t }}</button>
+        </form>
+        <button type="button" class="btn outline self-start" (click)="cookToday()">{{ 'recipe.madeToday' | t }}</button>
+        @if (cooked().length) {
+          <ul class="cook-list">
+            @for (c of cooked(); track $index) {
+              <li>
+                <app-icon name="cal" [size]="18" />
+                <strong>{{ fmtDate(c.date) }}</strong>
+                @if (c.note) { <span class="muted">{{ c.note }}</span> }
+                <button type="button" class="icon-btn" (click)="removeCook(c)" [attr.aria-label]="'common.remove' | t: { what: fmtDate(c.date) }"><app-icon name="x" [size]="16" /></button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+
+    <article class="card rv-main">
+      <div class="between">
+        <div>
+          <span class="rc-cat">{{ 'recipe.catPlural.' + r.category | t }} · {{ 'recipe.sourceShort.' + r.source | t }}</span>
+          <h1>{{ r.title || ('recipe.untitled' | t) }}</h1>
+        </div>
+        <app-fav [on]="r.favorite" (onChange)="patch({ favorite: $event })" />
+      </div>
+      <div class="row-gap wrap">
+        <app-rating [value]="r.rating" (valueChange)="patch({ rating: $event })" />
+        @if (meta()) { <span class="rv-meta"><app-icon name="clock" [size]="18" />{{ meta() }}</span> }
+      </div>
+      @if (r.description) { <p class="lead">{{ r.description }}</p> }
+
+      @if (r.ingredients.length) {
+        <section aria-labelledby="h-ing">
+          <div class="between wrap">
+            <h2 id="h-ing">{{ 'recipe.ingredients' | t }}</h2>
+            <div class="stepper" role="group" [attr.aria-label]="'recipe.servings' | t">
+              <button type="button" class="round soft" (click)="setServings(-1)" [disabled]="servings() <= 1" [attr.aria-label]="'recipe.lessServings' | t"><app-icon name="minus" [size]="18" stroke="2.4" /></button>
+              <span aria-live="polite">{{ 'recipe.servingsN' | tp: servings() }}</span>
+              <button type="button" class="round soft" (click)="setServings(1)" [attr.aria-label]="'recipe.moreServings' | t"><app-icon name="plus" [size]="18" stroke="2.4" /></button>
+            </div>
+          </div>
+          <ul class="ing-list">
+            @for (l of lines(); track $index) {
+              <li>
+                <label [class.done]="checked().has($index)">
+                  <input type="checkbox" [checked]="checked().has($index)" (change)="toggle($index)" />
+                  <strong>{{ l.amount }}</strong><span>{{ l.name }}</span>
+                </label>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      @if (r.steps.length) {
+        <section aria-labelledby="h-steps">
+          <h2 id="h-steps">{{ 'recipe.steps' | t }}</h2>
+          <ol class="step-list">
+            @for (s of r.steps; track $index) { <li><span class="step-n" aria-hidden="true">{{ $index + 1 }}</span><p>{{ s }}</p></li> }
+          </ol>
+        </section>
+      }
+
+      @if (r.notes) { <p class="rv-notes">{{ r.notes }}</p> }
+      @if (r.tags.length || r.sourceUrl) {
+        <div class="row-gap wrap">
+          @for (t of r.tags; track t) { <span class="chip tag">{{ t }}</span> }
+          @if (r.sourceUrl) { <a class="chip" [href]="r.sourceUrl" target="_blank" rel="noopener noreferrer">{{ 'recipe.original' | t }}<app-icon name="external" [size]="14" /></a> }
+        </div>
+      }
+
+      <div class="row-gap wrap">
+        <a class="btn outline" [routerLink]="['/recetas', r.id, 'editar']">{{ 'recipe.edit' | t }}</a>
+        <a class="btn white" routerLink="/recetas">{{ 'recipe.back' | t }}</a>
+      </div>
+    </article>
+  </div>
+} @else {
+  <p class="muted">{{ 'loader.loading' | t }}</p>
+}

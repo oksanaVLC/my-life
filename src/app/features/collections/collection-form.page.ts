@@ -5,7 +5,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { Store } from '../../core/data/store';
 import { Collection, CollectionKind, HOME_COLLECTIONS, Tint } from '../../core/data/models';
 import { I18nService } from '../../core/i18n/i18n.service';
-import { TPipe } from '../../core/i18n/t.pipe';
+import { TPipe, TPluralPipe } from '../../core/i18n/t.pipe';
 import { CloudinaryService } from '../../core/images/cloudinary.service';
 import { Cover, Crumbs } from '../../shared/ui/controls';
 import { CoverCrop } from '../../shared/ui/cover-crop';
@@ -21,7 +21,7 @@ const KINDS: CollectionKind[] = ['generic', 'special', 'contacts', 'recipes', 'g
  */
 @Component({
   selector: 'app-collection-form-page',
-  imports: [ReactiveFormsModule, RouterLink, Cover, Crumbs, CoverCrop, Icon, TPipe],
+  imports: [ReactiveFormsModule, RouterLink, Cover, Crumbs, CoverCrop, Icon, TPipe, TPluralPipe],
   templateUrl: './collection-form.page.html',
 })
 export class CollectionFormPage {
@@ -75,6 +75,9 @@ export class CollectionFormPage {
   protected readonly submitted = signal(false);
   protected readonly busy = signal(false);
   protected readonly error = signal('');
+  protected readonly confirmDelete = signal(false);
+  /** Lo que se irá con ella a la papelera */
+  protected readonly contents = computed(() => (this.id() ? this.store.collectionContents(this.id()!) : null));
   private previewTimer?: ReturnType<typeof setTimeout>;
   private filled = false;
 
@@ -150,6 +153,13 @@ export class CollectionFormPage {
     return { kind: 'img', value: img.url, publicId: img.publicId };
   }
 
+  protected remove(): void {
+    const c = this.editing();
+    if (!c) return;
+    this.store.trashCollection(c.id);
+    void this.router.navigate(['/colecciones'], { state: { trashed: { id: c.id, name: c.name } } });
+  }
+
   /** Puesto en Inicio: se conserva si ya estaba; si es nueva en Inicio, va al final (máx. 12). */
   private homeOrder(home: boolean, parentId: string, current?: number): number | undefined {
     if (parentId || !home) return undefined;
@@ -174,8 +184,10 @@ export class CollectionFormPage {
     }
     if (!cover) return this.busy.set(false);
 
-    const data = { name: v.name.trim(), kind: v.kind, parentId: v.parentId || undefined, cover };
     const c = this.editing();
+    // Una colección de tipo Recetas abre el recetario.
+    const route = v.kind === 'recipes' ? '/recetas' : c?.route === '/recetas' ? undefined : c?.route;
+    const data = { name: v.name.trim(), kind: v.kind, parentId: v.parentId || undefined, cover, route };
     if (c) {
       this.store.updateCollection(c.id, { ...data, homeOrder: this.homeOrder(v.home, v.parentId, c.homeOrder) });
       void this.router.navigate(['/colecciones', c.id]);

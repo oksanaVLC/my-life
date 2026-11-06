@@ -1,0 +1,47 @@
+<app-crumbs [items]="crumbs()" />
+<div class="page-head">
+  <div>
+    <h1>{{ store.recipesCollection()?.name ?? ('recipes.title' | t) }}</h1>
+    <p class="lead">{{ 'recipes.count' | tp: store.recipes().length }} · {{ 'recipes.favCount' | tp: favCount() }}</p>
+  </div>
+  <button type="button" class="btn primary" (click)="add()"><app-icon name="plus" [size]="18" stroke="2.4" />{{ 'recipes.add' | t }}</button>
+</div>
+
+@if (trashed(); as t) {
+  <p class="toast" role="status">{{ 'recipes.trashed' | t: { title: t.title || ('recipe.untitled' | t) } }}
+    <button type="button" class="link-btn" (click)="undo()">{{ 'recipes.undo' | t }}</button></p>
+}
+
+@if (store.recipes().length) {
+  <div class="toolbar">
+    <label class="search-field">
+      <span class="search-ico"><app-icon name="search" [size]="18" color="#fff" stroke="2.6" /></span>
+      <span class="sr-only">{{ 'recipes.searchPh' | t }}</span>
+      <input type="search" [value]="query()" (input)="query.set(value($event))" [placeholder]="'recipes.searchPh' | t" />
+    </label>
+    <div class="seg chips" role="group" [attr.aria-label]="'recipes.filter' | t">
+      @for (f of filters; track f) {
+        <button type="button" class="chip-btn" [class.on]="filter() === f" [attr.aria-pressed]="filter() === f" (click)="filter.set(f)">
+          {{ (f === 'all' ? 'common.allF' : f === 'favorites' ? 'recipes.favorites' : 'recipe.catPlural.' + f) | t }}
+        </button>
+      }
+    </div>
+    <app-view-switch [(value)]="view" />
+  </div>
+
+  @if (shown().length) {
+    <div class="rc-grid" [class.list]="view() === 'list'">
+      @for (r of shown(); track r.id) { <app-recipe-card [recipe]="r" [view]="view()" /> }
+    </div>
+    <ul class="legend">
+      <li><span class="lg-heart" aria-hidden="true">♥</span>{{ 'recipes.legendFav' | t }}</li>
+      <li><span class="lg-star" aria-hidden="true">★</span>{{ 'recipes.legendStar' | t }}</li>
+    </ul>
+  } @else {
+    <app-empty icon="search" [title]="'recipes.noMatch' | t" [text]="'recipes.noMatchText' | t" />
+  }
+} @else {
+  <app-empty icon="cloche" [title]="'recipes.emptyTitle' | t" [text]="'recipes.emptyText' | t">
+    <button type="button" class="btn primary" (click)="add()"><app-icon name="plus" [size]="18" stroke="2.4" />{{ 'recipes.addFirst' | t }}</button>
+  </app-empty>
+}

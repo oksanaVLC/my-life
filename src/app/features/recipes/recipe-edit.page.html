@@ -1,0 +1,145 @@
+@if (recipe(); as r) {
+  <app-crumbs [items]="crumbs()" />
+  <div class="page-head plain">
+    <h1>{{ (nueva() ? 'recipe.new' : 'recipe.edit') | t }}</h1>
+    <p class="save-pill" role="status"><app-icon name="check" [size]="16" stroke="2.6" />{{ 'recipe.autosave' | t }}</p>
+  </div>
+
+  <div class="recipe-edit">
+    <!-- Columna de fotos y valoración -->
+    <div class="re-side">
+      <label class="re-main" [class.over]="dragOver()" (dragover)="onDragOver($event)" (dragleave)="dragOver.set(false)" (drop)="onDrop($event)">
+        <input type="file" accept="image/*" multiple class="sr-only" (change)="onFiles($event)" />
+        @if (r.photos[0]; as p) {
+          <img [src]="thumb(p, 900)" alt="" />
+        } @else {
+          <span class="re-empty"><app-icon name="cloche" [size]="96" color="#fff" /><strong>{{ 'recipe.addMainPhoto' | t }}</strong></span>
+        }
+        @if (uploading()) { <span class="re-uploading" role="status">{{ 'cover.uploading' | t }}</span> }
+      </label>
+      @if (photoError()) { <p class="alert" role="alert">{{ photoError() }}</p> }
+
+      <ul class="re-thumbs" [attr.aria-label]="'recipe.photos' | t">
+        @for (p of r.photos; track p.publicId; let i = $index) {
+          <li class="re-thumb" [class.main]="i === 0">
+            <img [src]="thumb(p, 200)" alt="" />
+            <span class="re-thumb-actions">
+              @if (i > 0) { <button type="button" class="round sm" (click)="makeMain(i)" [attr.aria-label]="'recipe.makeMain' | t"><app-icon name="star" [size]="14" /></button> }
+              <button type="button" class="round sm" (click)="removePhoto(i)" [attr.aria-label]="'recipe.removePhoto' | t"><app-icon name="x" [size]="14" stroke="2.4" /></button>
+            </span>
+          </li>
+        }
+        <li>
+          <label class="re-add-photo">
+            <input type="file" accept="image/*" multiple class="sr-only" (change)="onFiles($event)" />
+            <app-icon name="plus" [size]="20" stroke="2.4" /><span>{{ 'recipe.photos' | t }}</span>
+          </label>
+        </li>
+      </ul>
+
+      <div class="card re-rate">
+        <div>
+          <span class="lbl">{{ 'recipe.yourRating' | t }}</span>
+          <app-rating [value]="r.rating" (valueChange)="patch({ rating: $event })" />
+        </div>
+        <app-fav [on]="r.favorite" (onChange)="patch({ favorite: $event })" [label]="true" />
+      </div>
+    </div>
+
+    <!-- Formulario -->
+    <form class="card edit-main" [formGroup]="form" (submit)="$event.preventDefault()">
+      <label class="field"><span class="lbl">{{ 'recipe.title' | t }}</span>
+        <input class="input lg" formControlName="title" [placeholder]="'recipe.titlePh' | t" />
+      </label>
+      <label class="field"><span class="lbl">{{ 'recipe.description' | t }}</span>
+        <textarea formControlName="description" rows="2" [placeholder]="'recipe.optional' | t"></textarea>
+      </label>
+
+      <div class="four-col">
+        <label class="field"><span class="lbl">{{ 'recipe.time' | t }}</span>
+          <span class="input-unit"><input class="input" type="number" min="0" step="5" formControlName="minutes" placeholder="30" /><span>min</span></span>
+        </label>
+        <label class="field"><span class="lbl">{{ 'recipe.servings' | t }}</span>
+          <input class="input" type="number" min="1" max="100" formControlName="servings" />
+        </label>
+        <label class="field"><span class="lbl">{{ 'recipe.difficulty' | t }}</span>
+          <select class="input" formControlName="difficulty">
+            @for (d of difficulties; track d) { <option [value]="d">{{ 'recipe.diff.' + d | t }}</option> }
+          </select>
+        </label>
+        <label class="field"><span class="lbl">{{ 'recipe.category' | t }}</span>
+          <select class="input" formControlName="category">
+            @for (c of categories; track c) { <option [value]="c">{{ 'recipe.catPlural.' + c | t }}</option> }
+          </select>
+        </label>
+      </div>
+
+      <fieldset class="field" formArrayName="ingredients">
+        <legend class="lbl">{{ 'recipe.ingredients' | t }}</legend>
+        @for (c of ingredients.controls; track c; let i = $index) {
+          <div class="line-row">
+            <input class="input" [formControlName]="i" data-list="ingredients" [placeholder]="'recipe.ingredientPh' | t"
+              [attr.aria-label]="'recipe.ingredientN' | t: { n: i + 1 }" (keydown.enter)="enterIngredient($event, i)" />
+            <button type="button" class="round soft sm" (click)="removeLine('ingredients', i)" [attr.aria-label]="'common.remove' | t: { what: c.value || ('recipe.ingredientN' | t: { n: i + 1 }) }"><app-icon name="x" [size]="14" stroke="2.4" /></button>
+          </div>
+        }
+        <button type="button" class="btn dashed sm" (click)="addLine('ingredients')"><app-icon name="plus" [size]="16" stroke="2.4" />{{ 'recipe.addIngredient' | t }}</button>
+        <small class="muted">{{ 'recipe.ingredientHint' | t }}</small>
+      </fieldset>
+
+      <fieldset class="field" formArrayName="steps">
+        <legend class="lbl">{{ 'recipe.steps' | t }}</legend>
+        @for (c of steps.controls; track c; let i = $index) {
+          <div class="line-row step-row">
+            <span class="step-n" aria-hidden="true">{{ i + 1 }}</span>
+            <textarea [formControlName]="i" data-list="steps" rows="2" [placeholder]="'recipe.stepPh' | t" [attr.aria-label]="'recipe.stepN' | t: { n: i + 1 }"></textarea>
+            <button type="button" class="round soft sm" (click)="removeLine('steps', i)" [attr.aria-label]="'common.remove' | t: { what: ('recipe.stepN' | t: { n: i + 1 }) }"><app-icon name="x" [size]="14" stroke="2.4" /></button>
+          </div>
+        }
+        <button type="button" class="btn dashed sm" (click)="addLine('steps')"><app-icon name="plus" [size]="16" stroke="2.4" />{{ 'recipe.addStep' | t }}</button>
+      </fieldset>
+
+      <label class="field"><span class="lbl">{{ 'recipe.notes' | t }}</span>
+        <textarea formControlName="notes" rows="2" [placeholder]="'recipe.notesPh' | t"></textarea>
+      </label>
+
+      <div class="two-col">
+        <label class="field"><span class="lbl">{{ 'recipe.tags' | t }}</span>
+          <input class="input" formControlName="tags" placeholder="#cena #rápida" />
+        </label>
+        <label class="field"><span class="lbl">{{ 'recipe.sourceUrl' | t }}</span>
+          <input class="input" type="url" formControlName="sourceUrl" [placeholder]="'recipe.optional' | t" />
+        </label>
+      </div>
+      <label class="field"><span class="lbl">{{ 'recipe.collection' | t }}</span>
+        <select class="input" formControlName="collectionId">
+          <option value="">{{ 'entry.noCollection' | t }}</option>
+          @for (o of collections(); track o.id) { <option [value]="o.id">{{ o.label }}</option> }
+        </select>
+      </label>
+
+      @if (confirmDelete()) {
+        <div class="confirm-box" role="alertdialog" aria-labelledby="del-q">
+          <p id="del-q" class="danger-text">{{ 'recipe.confirmDelete' | t: { title: r.title || ('recipe.untitled' | t) } }}</p>
+          <div class="row-gap">
+            <button type="button" class="btn soft" (click)="confirmDelete.set(false)">{{ 'common.cancel' | t }}</button>
+            <button type="button" class="btn danger-solid" (click)="remove()">{{ 'entry.toTrash' | t }}</button>
+          </div>
+        </div>
+      } @else {
+        <div class="between wrap">
+          <div class="row-gap">
+            <button type="button" class="btn primary" (click)="done()">{{ 'common.done' | t }}</button>
+            <button type="button" class="btn soft" (click)="discard()">{{ 'recipe.discard' | t }}</button>
+          </div>
+          <button type="button" class="btn danger" (click)="confirmDelete.set(true)"><app-icon name="trash" [size]="18" />{{ 'recipe.delete' | t }}</button>
+        </div>
+        <small class="muted">{{ 'recipe.buttonsHint' | t }}</small>
+      }
+    </form>
+  </div>
+} @else if (missing()) {
+  <app-empty icon="cloche" [title]="'recipe.notFound' | t" [text]="'notFound.text' | t"><a routerLink="/recetas" class="btn primary">{{ 'recipe.back' | t }}</a></app-empty>
+} @else {
+  <p class="muted">{{ 'loader.loading' | t }}</p>
+}

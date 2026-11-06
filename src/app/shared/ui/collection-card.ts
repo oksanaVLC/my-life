@@ -15,7 +15,7 @@ import { Cover } from './controls';
       @if (badge() !== null) { <span class="cc-badge" [attr.aria-label]="'collections.onHome' | t">⌂ {{ badge() }}</span> }
       <span class="cc-body">
         <span class="cc-name">{{ collection().name }}</span>
-        <span class="cc-count">{{ 'entries.count' | tp: count() }}</span>
+        <span class="cc-count">{{ (collection().kind === 'recipes' ? 'recipes.count' : 'entries.count') | tp: count() }}</span>
       </span>
     </a>`,
 })
@@ -23,6 +23,8 @@ export class CollectionCard {
   private readonly store = inject(Store);
   readonly collection = input.required<Collection>();
   readonly badge = input<number | null>(null);
-  protected readonly count = computed(() => this.store.entriesIn(this.collection().id, true).length);
+  protected readonly count = computed(() =>
+    this.collection().kind === 'recipes' ? this.store.recipes().length : this.store.entriesIn(this.collection().id, true).length,
+  );
   protected readonly link = computed(() => this.collection().route ?? '/colecciones/' + this.collection().id);
 }

@@ -72,7 +72,7 @@ export class Star {
       @case ('logo') { <span class="tile logo"><img [src]="collection().cover.value" alt="" loading="lazy" /></span> }
       @default { <img class="tile" [src]="src()" alt="" loading="lazy" /> }
     }`,
-  styles: `:host{display:block} .tile{display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:1/1;object-fit:cover}
+  styles: `:host{display:block} .tile{display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:1/1;object-fit:cover} img.tile{background:#fff}
     .logo{background:#F5F1E8} .logo img{width:72%;height:auto;object-fit:contain}`,
 })
 export class Cover {
