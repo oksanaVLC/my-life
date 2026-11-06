@@ -9,6 +9,7 @@ import { Cover, Crumbs, Empty, ViewSwitch, YearSelect } from '../../shared/ui/co
 import { PlusMenu } from '../../shared/ui/plus-menu';
 import { Icon } from '../../shared/ui/icon';
 import { collectionOptions } from './collection-options';
+import { collectionLink, hasOwnScreen } from '../../core/data/collection-link';
 
 const isSpecial = (c: Collection) => c.kind === 'special' || c.kind === 'contacts';
 
@@ -32,8 +33,8 @@ export class CollectionDetailPage {
     // Las colecciones con pantalla propia (p. ej. Recetas) se abren allí.
     const router = inject(Router);
     effect(() => {
-      const route = this.col()?.route;
-      if (route) void router.navigateByUrl(route, { replaceUrl: true });
+      const c = this.col();
+      if (c && (hasOwnScreen(c) || c.route)) void router.navigateByUrl(collectionLink(c), { replaceUrl: true });
     });
   }
   protected readonly crumbs = computed(() => [
@@ -55,6 +56,7 @@ export class CollectionDetailPage {
   protected readonly toast = signal('');
   protected readonly types: (EntryType | 'all')[] = ['all', 'task', 'idea', 'note', 'none'];
   protected readonly options = computed(() => collectionOptions(this.store));
+  protected readonly linkOf = collectionLink;
 
   /** Entradas de esta carpeta y de sus subcarpetas normales (las especiales tienen su tarjeta). */
   private readonly all = computed(() => {

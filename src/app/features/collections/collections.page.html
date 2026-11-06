@@ -53,7 +53,7 @@
   } @else {
     <div class="card list">
       @for (c of shown(); track c.id) {
-        <a class="list-row" [routerLink]="c.route ?? '/colecciones/' + c.id">
+        <a class="list-row" [routerLink]="linkOf(c)">
           <span class="thumb"><app-cover [collection]="c" [iconSize]="34" /></span>
           <span class="grow"><strong>{{ c.name }}</strong></span>
           <span class="muted">{{ 'entries.count' | tp: count(c) }}</span>

@@ -1,0 +1,114 @@
+@if (missing()) {
+  <app-empty icon="link" [title]="'notFound.title' | t" [text]="'notFound.text' | t"><a routerLink="/colecciones" class="btn primary">{{ 'nav.collections' | t }}</a></app-empty>
+} @else if (col(); as c) {
+  <app-crumbs [items]="crumbs()" />
+  <div class="page-head">
+    <div class="head-cover">
+      <span class="head-tile"><app-cover [collection]="c" [iconSize]="56" /></span>
+      <div>
+        <h1>{{ c.name }}</h1>
+        <p class="lead">{{ c.description || ('links.lead' | t) }}</p>
+      </div>
+    </div>
+    <a class="btn soft sm" [routerLink]="'/colecciones/' + c.id + '/editar'"><app-icon name="pencil" [size]="16" />{{ 'collectionEdit.button' | t }}</a>
+  </div>
+
+  <div class="toolbar">
+    <div class="seg chips" role="group" [attr.aria-label]="'links.groups' | t">
+      @for (g of groups(); track g.name) {
+        <button type="button" class="chip-btn" [class.on]="current() === g.name" [attr.aria-pressed]="current() === g.name" (click)="group.set(g.name)">{{ g.name }} <span class="count">{{ g.n }}</span></button>
+      }
+      @if (currentIsNew()) {
+        <button type="button" class="chip-btn on" aria-pressed="true">{{ current() }} <span class="count">0</span></button>
+      }
+      @if (addingGroup()) {
+        <form class="row-gap" (submit)="addGroup($event)">
+          <input class="input sm" [value]="newGroup()" (input)="newGroup.set(value($event))" [placeholder]="'links.groupPh' | t" [attr.aria-label]="'links.newGroup' | t" />
+          <button type="submit" class="btn soft sm">{{ 'common.add' | t }}</button>
+        </form>
+      } @else {
+        <button type="button" class="chip-btn dashed" (click)="startGroup()"><app-icon name="plus" [size]="14" stroke="2.4" />{{ 'links.newGroup' | t }}</button>
+      }
+    </div>
+  </div>
+
+  <div class="between wrap">
+    <h2 class="lk-h">{{ 'links.title' | t: { group: current() } }}</h2>
+    <div class="row-gap wrap">
+      @if (all().length > 3) {
+        <label class="search-field">
+          <span class="search-ico"><app-icon name="search" [size]="18" color="#fff" stroke="2.6" /></span>
+          <span class="sr-only">{{ 'common.search' | t }}</span>
+          <input type="search" [value]="query()" (input)="query.set(value($event))" [placeholder]="'common.searchPh' | t" />
+        </label>
+      }
+      <app-view-switch [(value)]="view" />
+    </div>
+  </div>
+
+  <form class="card lk-add" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <label class="lk-field"><app-icon name="link" [size]="18" />
+      <span class="sr-only">{{ 'links.url' | t }}</span>
+      <input formControlName="url" type="url" inputmode="url" [placeholder]="'links.urlPh' | t" [attr.aria-invalid]="!!error()" />
+    </label>
+    <label class="lk-field grow">
+      <span class="sr-only">{{ 'links.note' | t }}</span>
+      <input formControlName="note" [placeholder]="'links.notePh' | t" />
+    </label>
+    <button type="submit" class="btn primary"><app-icon name="plus" [size]="18" stroke="2.4" />{{ 'links.save' | t }}</button>
+  </form>
+  @if (error()) { <p class="alert" role="alert">{{ error() }}</p> }
+  @if (toast()) {
+    <p class="toast" role="status">{{ toast() }}
+      @if (lastTrashed()) { <button type="button" class="link-btn" (click)="undo()">{{ 'recipes.undo' | t }}</button> }
+    </p>
+  }
+
+  @if (shown().length) {
+    <div class="lk-grid" [class.list]="view() === 'list'">
+      @for (l of shown(); track l.id) {
+        <article class="lk-card" [class.is-fav]="l.favorite">
+          @if (view() === 'cards') {
+            <a class="lk-preview" [href]="l.url" target="_blank" rel="noopener noreferrer" tabindex="-1" aria-hidden="true">
+              <span class="lk-dots"><i></i><i></i><i></i></span>
+              <span class="lk-domain">{{ domain(l) }}</span>
+              <span class="lk-big">{{ domain(l).split('.')[0] }}</span>
+            </a>
+          }
+          <app-star [on]="l.favorite" (toggle)="store.updateLink(l.id, { favorite: !l.favorite })" class="lk-star" />
+          <div class="lk-body">
+            @if (editing() === l.id) {
+              <form class="lk-edit" [formGroup]="draft" (ngSubmit)="saveEdit(l)">
+                <label class="field"><span class="lbl">{{ 'links.titleLabel' | t }}</span><input class="input" formControlName="title" /></label>
+                <label class="field"><span class="lbl">{{ 'links.note' | t }}</span><textarea formControlName="note" rows="3"></textarea></label>
+                <label class="field"><span class="lbl">{{ 'entry.tags' | t }}</span><input class="input" formControlName="tags" placeholder="#minimal #belleza" /></label>
+                <label class="field"><span class="lbl">{{ 'links.group' | t }}</span><input class="input" formControlName="group" [attr.list]="'groups-' + l.id" />
+                  <datalist [id]="'groups-' + l.id">@for (g of groups(); track g.name) { <option [value]="g.name"></option> }</datalist></label>
+                <div class="between wrap">
+                  <div class="row-gap"><button type="submit" class="btn primary sm">{{ 'common.save' | t }}</button><button type="button" class="btn soft sm" (click)="editing.set(null)">{{ 'common.cancel' | t }}</button></div>
+                  <button type="button" class="btn danger sm" (click)="remove(l)"><app-icon name="trash" [size]="16" />{{ 'links.delete' | t }}</button>
+                </div>
+              </form>
+            } @else {
+              <h3 class="lk-title">{{ l.title }}</h3>
+              @if (view() === 'list') { <span class="muted">{{ domain(l) }}</span> }
+              @if (l.note) { <p class="lk-note">{{ l.note }}</p> }
+              @if (l.tags.length) { <div class="row-gap wrap">@for (t of l.tags; track t) { <span class="chip tag">{{ t }}</span> }</div> }
+              <div class="lk-foot">
+                <small class="muted">{{ saved(l) }}</small>
+                <div class="row-gap">
+                  <button type="button" class="round soft sm" (click)="edit(l)" [attr.aria-label]="'links.editX' | t: { title: l.title }"><app-icon name="pencil" [size]="16" /></button>
+                  <a class="btn outline sm" [href]="l.url" target="_blank" rel="noopener noreferrer">{{ 'links.open' | t }}<app-icon name="external" [size]="14" /></a>
+                </div>
+              </div>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  } @else {
+    <app-empty icon="link" [title]="'links.emptyTitle' | t" [text]="'links.emptyText' | t" />
+  }
+} @else {
+  <p class="muted">{{ 'loader.loading' | t }}</p>
+}

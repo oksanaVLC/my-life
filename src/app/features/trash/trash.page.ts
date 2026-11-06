@@ -6,7 +6,7 @@ import { TPipe, TPluralPipe } from '../../core/i18n/t.pipe';
 import { Empty } from '../../shared/ui/controls';
 import { Icon } from '../../shared/ui/icon';
 
-interface TrashItem { kind: 'entry' | 'recipe' | 'collection' | 'date' | 'gift'; id: string; title: string; label: string; where: string; deletedAt?: string }
+interface TrashItem { kind: 'entry' | 'recipe' | 'collection' | 'date' | 'gift' | 'contact' | 'link'; id: string; title: string; label: string; where: string; deletedAt?: string }
 
 /** Papelera: lo borrado se guarda 30 días; se puede recuperar o eliminar para siempre. */
 @Component({
@@ -57,6 +57,8 @@ export class TrashPage {
         return { kind: 'collection' as const, id: c.id, title: c.name, label: 'trash.collection', where: n ? this.i18n.plural('entries.count', n) : '', deletedAt: c.deletedAt };
       }),
       ...this.store.trash().filter((e) => !inTrashed(e)).map((e) => ({ kind: 'entry' as const, id: e.id, title: e.title, label: 'type.' + e.type, where: where(e.collectionId), deletedAt: e.deletedAt })),
+      ...this.store.contactTrash().filter((x) => !inTrashed(x)).map((x) => ({ kind: 'contact' as const, id: x.id, title: x.company || x.email, label: 'contacts.row', where: where(x.collectionId), deletedAt: x.deletedAt })),
+      ...this.store.linkTrash().filter((x) => !inTrashed(x)).map((x) => ({ kind: 'link' as const, id: x.id, title: x.title, label: 'links.one', where: where(x.collectionId), deletedAt: x.deletedAt })),
       ...this.store.dateTrash().map((d) => ({ kind: 'date' as const, id: d.id, title: d.name, label: 'dates.kind.' + d.kind, where: '', deletedAt: d.deletedAt })),
       ...this.store.giftTrash().map((g) => ({ kind: 'gift' as const, id: g.id, title: g.title, label: 'gifts.one', where: '', deletedAt: g.deletedAt })),
       ...this.store.recipeTrash().filter((r) => !inTrashed(r)).map((r) => ({ kind: 'recipe' as const, id: r.id, title: r.title, label: 'recipe.one', where: where(r.collectionId), deletedAt: r.deletedAt })),
@@ -69,12 +71,16 @@ export class TrashPage {
   protected restore(e: TrashItem): void {
     if (e.kind === 'collection') this.store.restoreCollection(e.id);
     else if (e.kind === 'date') this.store.restoreDate(e.id);
+    else if (e.kind === 'contact') this.store.restoreContact(e.id);
+    else if (e.kind === 'link') this.store.restoreLink(e.id);
     else if (e.kind === 'gift') this.store.restoreGift(e.id);
     else if (e.kind === 'recipe') this.store.restoreRecipe(e.id);
     else this.store.restore(e.id);
     this.toast.set(this.i18n.t('trash.restored', { title: e.title }));
   }
   protected kill(e: TrashItem): void {
+    if (e.kind === 'contact') { void this.store.deleteContactForever(e.id); this.toast.set(this.i18n.t('trash.killed', { title: e.title })); return; }
+    if (e.kind === 'link') { void this.store.deleteLinkForever(e.id); this.toast.set(this.i18n.t('trash.killed', { title: e.title })); return; }
     void (e.kind === 'date' ? this.store.deleteDateForever(e.id) : e.kind === 'gift' ? this.store.deleteGiftForever(e.id) : e.kind === 'collection' ? this.store.deleteCollectionForever(e.id) : e.kind === 'recipe' ? this.store.deleteRecipeForever(e.id) : this.store.deleteForever(e.id));
     this.toast.set(this.i18n.t('trash.killed', { title: e.title }));
   }

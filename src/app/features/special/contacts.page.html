@@ -1,0 +1,73 @@
+@if (missing()) {
+  <app-empty icon="table" [title]="'notFound.title' | t" [text]="'notFound.text' | t"><a routerLink="/colecciones" class="btn primary">{{ 'nav.collections' | t }}</a></app-empty>
+} @else if (col(); as c) {
+  <app-crumbs [items]="crumbs()" />
+  <div class="page-head">
+    <div>
+      <h1>{{ title() }}</h1>
+      <p class="lead">{{ 'contacts.count' | tp: rows().length }} · {{ 'contacts.editable' | t }}</p>
+    </div>
+    <div class="row-gap wrap">
+      @if (tabs().length > 1) {
+        <nav class="seg" [attr.aria-label]="'contacts.tables' | t">
+          @for (tb of tabs(); track tb.id) {
+            <a [routerLink]="tb.link" [class.on]="tb.id === c.id" [attr.aria-current]="tb.id === c.id ? 'page' : null">{{ tb.label }}</a>
+          }
+        </nav>
+      }
+      <p class="save-pill" role="status"><app-icon name="check" [size]="16" stroke="2.6" />{{ 'save.auto' | t }}</p>
+      <a class="btn soft sm" [routerLink]="'/colecciones/' + c.id + '/editar'"><app-icon name="pencil" [size]="16" />{{ 'collectionEdit.button' | t }}</a>
+    </div>
+  </div>
+
+  @if (toast()) {
+    <p class="toast" role="status">{{ toast() }}
+      @if (lastTrashed()) { <button type="button" class="link-btn" (click)="undo()">{{ 'recipes.undo' | t }}</button> }
+    </p>
+  }
+
+  <section class="card ct-card">
+    <div class="ct-scroll">
+      <table class="ct-table">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">{{ 'contacts.date' | t }}</th>
+            <th scope="col">{{ 'contacts.company' | t }}</th>
+            <th scope="col">{{ 'contacts.email' | t }}</th>
+            <th scope="col">{{ 'contacts.phone' | t }}</th>
+            <th scope="col">{{ 'contacts.notes' | t }}</th>
+            <th scope="col"><span class="sr-only">{{ 'contacts.actions' | t }}</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rows(); track r.id; let i = $index) {
+            <tr [attr.data-row]="r.id">
+              <td class="ct-n">{{ i + 1 }}</td>
+              <td class="ct-date">{{ fmtDate(r.date) }}</td>
+              <td><input class="ct-in strong" [value]="r.company" (input)="edit(r, 'company', $event)" (blur)="save(r.id)" [placeholder]="'contacts.company' | t" [attr.aria-label]="('contacts.company' | t) + ' ' + (i + 1)" /></td>
+              <td class="ct-with-link">
+                <input class="ct-in" type="email" [value]="r.email" (input)="edit(r, 'email', $event)" (blur)="save(r.id)" placeholder="email@…" [attr.aria-label]="('contacts.email' | t) + ' ' + (i + 1)" />
+                @if (mail(r.email); as m) { <a class="ct-go" [href]="m" [attr.aria-label]="'contacts.writeTo' | t: { to: r.email }"><app-icon name="external" [size]="14" /></a> }
+              </td>
+              <td class="ct-with-link">
+                <input class="ct-in" type="tel" [value]="r.phone" (input)="edit(r, 'phone', $event)" (blur)="save(r.id)" placeholder="+34 …" [attr.aria-label]="('contacts.phone' | t) + ' ' + (i + 1)" />
+                @if (tel(r.phone); as t) { <a class="ct-go" [href]="t" [attr.aria-label]="'contacts.call' | t: { to: r.phone }"><app-icon name="external" [size]="14" /></a> }
+              </td>
+              <td><input class="ct-in" [value]="r.notes" (input)="edit(r, 'notes', $event)" (blur)="save(r.id)" [placeholder]="'contacts.notes' | t" [title]="r.notes" [attr.aria-label]="('contacts.notes' | t) + ' ' + (i + 1)" /></td>
+              <td><button type="button" class="icon-btn danger" (click)="remove(r)" [attr.aria-label]="'contacts.delete' | t: { name: r.company || (i + 1) }"><app-icon name="trash" [size]="18" /></button></td>
+            </tr>
+          } @empty {
+            <tr><td colspan="7" class="ct-empty muted">{{ 'contacts.empty' | t }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="ct-foot">
+      <button type="button" class="btn primary" (click)="add()"><app-icon name="plus" [size]="18" stroke="2.4" />{{ 'contacts.add' | t }}</button>
+      <small class="muted">{{ 'contacts.dateHint' | t }}</small>
+    </div>
+  </section>
+} @else {
+  <p class="muted">{{ 'loader.loading' | t }}</p>
+}

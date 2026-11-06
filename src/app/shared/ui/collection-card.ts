@@ -4,6 +4,7 @@ import { Collection } from '../../core/data/models';
 import { Store } from '../../core/data/store';
 import { TPipe, TPluralPipe } from '../../core/i18n/t.pipe';
 import { Cover } from './controls';
+import { collectionLink } from '../../core/data/collection-link';
 
 /** Tarjeta de colección con portada cuadrada. */
 @Component({
@@ -29,11 +30,13 @@ export class CollectionCard {
       case 'recipes': return this.store.recipes().length;
       case 'birthdays': return this.store.dates().length;
       case 'gifts': return this.store.gifts().length;
+      case 'contacts': return this.store.contactCount(this.collection().id);
+      case 'links': return this.store.linksIn(this.collection().id).length;
       default: return this.store.entriesIn(this.collection().id, true).length;
     }
   });
   protected readonly countKey = computed(() =>
-    ({ recipes: 'recipes.count', birthdays: 'dates.count', gifts: 'gifts.count' } as Record<string, string>)[this.collection().kind] ?? 'entries.count',
+    ({ recipes: 'recipes.count', birthdays: 'dates.count', gifts: 'gifts.count', contacts: 'contacts.count', links: 'links.count' } as Record<string, string>)[this.collection().kind] ?? 'entries.count',
   );
-  protected readonly link = computed(() => this.collection().route ?? '/colecciones/' + this.collection().id);
+  protected readonly link = computed(() => collectionLink(this.collection()));
 }

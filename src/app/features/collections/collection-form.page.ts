@@ -11,6 +11,7 @@ import { Cover, Crumbs } from '../../shared/ui/controls';
 import { CoverCrop } from '../../shared/ui/cover-crop';
 import { Icon } from '../../shared/ui/icon';
 import { collectionOptions } from './collection-options';
+import { collectionLink } from '../../core/data/collection-link';
 
 const KINDS: CollectionKind[] = ['generic', 'special', 'contacts', 'recipes', 'birthdays', 'gifts', 'links'];
 /** Tipos con pantalla propia */
@@ -188,14 +189,15 @@ export class CollectionFormPage {
 
     const c = this.editing();
     // Las colecciones de tipo Recetas, Cumpleaños o Regalos abren su pantalla propia.
-    const route = KIND_ROUTES[v.kind] ?? (Object.values(KIND_ROUTES).includes(c?.route ?? '') ? undefined : c?.route);
+    // La pantalla propia la decide el tipo (collectionLink); ya no hace falta guardar la ruta.
+    const route = Object.values(KIND_ROUTES).includes(c?.route ?? '') ? undefined : c?.route;
     const data = { name: v.name.trim(), kind: v.kind, parentId: v.parentId || undefined, cover, route };
     if (c) {
       this.store.updateCollection(c.id, { ...data, homeOrder: this.homeOrder(v.home, v.parentId, c.homeOrder) });
-      void this.router.navigate(['/colecciones', c.id]);
+      void this.router.navigateByUrl(collectionLink({ ...c, ...data }));
     } else {
       const col = this.store.createCollection({ ...data, homeOrder: this.homeOrder(v.home, v.parentId) });
-      void this.router.navigate(['/colecciones', col.id]);
+      void this.router.navigateByUrl(collectionLink(col));
     }
   }
 }

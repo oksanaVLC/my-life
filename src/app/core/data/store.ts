@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { BACKEND } from './backend';
 import { LoadingService } from '../loading/loading.service';
-import { Collection, Entry, EntryType, Gift, HOME_COLLECTIONS, ImportantDate, Recipe, Settings, TRASH_DAYS } from './models';
+import { Collection, Contact, Entry, EntryType, Gift, HOME_COLLECTIONS, ImportantDate, LinkItem, Recipe, Settings, TRASH_DAYS } from './models';
 
 const DEFAULT_SETTINGS: Settings = {
   lang: 'es',
@@ -30,6 +30,8 @@ export class Store {
   private readonly _recipes = signal<Recipe[]>([]);
   private readonly _dates = signal<ImportantDate[]>([]);
   private readonly _gifts = signal<Gift[]>([]);
+  private readonly _contacts = signal<Contact[]>([]);
+  private readonly _links = signal<LinkItem[]>([]);
   readonly settings = signal<Settings>(DEFAULT_SETTINGS);
   readonly saveState = signal<SaveState>('saved');
   readonly loaded = signal(false);
@@ -55,6 +57,9 @@ export class Store {
   readonly dateTrash = computed(() => this._dates().filter((d) => !!d.deletedAt));
   readonly gifts = computed(() => this._gifts().filter((g) => !g.deletedAt));
   readonly giftTrash = computed(() => this._gifts().filter((g) => !!g.deletedAt));
+  readonly contactTrash = computed(() => this._contacts().filter((x) => !!x.deletedAt));
+  readonly linkTrash = computed(() => this._links().filter((x) => !!x.deletedAt));
+  readonly allLinks = computed(() => this._links().filter((x) => !x.deletedAt));
   readonly recipeTrash = computed(() => this._recipes().filter((r) => !!r.deletedAt));
   /** La colección «Recetas» (la primera de tipo recetas), para las migas y como colección por defecto. */
   readonly recipesCollection = computed(() => this.collections().find((c) => c.kind === 'recipes'));
@@ -73,6 +78,8 @@ export class Store {
     this._recipes.set(data.recipes);
     this._dates.set(data.dates ?? []);
     this._gifts.set(data.gifts ?? []);
+    this._contacts.set(data.contacts ?? []);
+    this._links.set(data.links ?? []);
     // Recetas nuevas que se quedaron vacías (se cerró la ventana sin escribir nada): fuera.
     const old = Date.now() - 10 * 60_000;
     for (const r of data.recipes) {
@@ -145,6 +152,8 @@ export class Store {
     for (const e of this.trash()) await this.deleteForever(e.id);
     for (const r of this.recipeTrash()) await this.deleteRecipeForever(r.id);
     for (const g of this.giftTrash()) await this.deleteGiftForever(g.id);
+    for (const x of this.contactTrash()) await this.deleteContactForever(x.id);
+    for (const x of this.linkTrash()) await this.deleteLinkForever(x.id);
     for (const d of this.dateTrash()) await this.deleteDateForever(d.id);
     for (const c of this.collectionTrash()) await this.deleteCollectionForever(c.id);
   }
@@ -178,6 +187,8 @@ export class Store {
     for (const cid of ids) this.updateCollection(cid, { deletedAt: ts });
     for (const e of this.entries()) if (e.collectionId && ids.has(e.collectionId)) this.updateEntry(e.id, { deletedAt: ts });
     if (isRecipes) for (const r of this.recipes()) if (!r.collectionId || ids.has(r.collectionId)) this.updateRecipe(r.id, { deletedAt: ts });
+    for (const x of this._contacts()) if (!x.deletedAt && ids.has(x.collectionId)) this.updateContact(x.id, { deletedAt: ts });
+    for (const x of this._links()) if (!x.deletedAt && ids.has(x.collectionId)) this.updateLink(x.id, { deletedAt: ts });
   }
 
   restoreCollection(id: string): void {
@@ -187,6 +198,8 @@ export class Store {
     for (const c of this._collections()) if (ids.has(c.id) && c.deletedAt === ts) this.updateCollection(c.id, { deletedAt: undefined });
     for (const e of this._entries()) if (e.deletedAt === ts && e.collectionId && ids.has(e.collectionId)) this.updateEntry(e.id, { deletedAt: undefined });
     for (const r of this._recipes()) if (r.deletedAt === ts) this.updateRecipe(r.id, { deletedAt: undefined });
+    for (const x of this._contacts()) if (x.deletedAt === ts && ids.has(x.collectionId)) this.updateContact(x.id, { deletedAt: undefined });
+    for (const x of this._links()) if (x.deletedAt === ts && ids.has(x.collectionId)) this.updateLink(x.id, { deletedAt: undefined });
   }
 
   async deleteCollectionForever(id: string): Promise<void> {
@@ -198,6 +211,9 @@ export class Store {
     for (const r of this._recipes().filter((x) => x.collectionId && set.has(x.collectionId))) {
       if (r.deletedAt) await this.deleteRecipeForever(r.id); else this.updateRecipe(r.id, { collectionId: undefined });
     }
+    // Contactos y enlaces se van con su colección (en Supabase, por la clave foránea «on delete cascade»).
+    this._contacts.update((l) => l.filter((x) => !set.has(x.collectionId)));
+    this._links.update((l) => l.filter((x) => !set.has(x.collectionId)));
     for (const cid of ids.reverse()) {
       this._collections.update((l) => l.filter((c) => c.id !== cid));
       await this.run(() => this.backend.deleteCollectionForever(cid));
@@ -325,9 +341,58 @@ export class Store {
     await this.run(() => this.backend.deleteGiftForever(id));
   }
 
+  /* ---------------- contactos (tabla de una colección «contacts») */
+  contactsIn(collectionId: string): Contact[] {
+    return this._contacts().filter((x) => x.collectionId === collectionId && !x.deletedAt).sort((a, b) => a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt));
+  }
+  contactCount(collectionId: string): number { return this.contactsIn(collectionId).length; }
+  newContact(collectionId: string): Contact {
+    const ts = new Date().toISOString();
+    const d = new Date();
+    const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const x: Contact = { id: uid(), collectionId, date, company: '', email: '', phone: '', notes: '', createdAt: ts, updatedAt: ts };
+    this._contacts.update((l) => [...l, x]);
+    void this.run(() => this.backend.upsertContact(x));
+    return x;
+  }
+  updateContact(id: string, patch: Partial<Contact>): void {
+    let next: Contact | undefined;
+    this._contacts.update((l) => l.map((x) => (x.id === id ? (next = { ...x, ...patch, updatedAt: new Date().toISOString() }) : x)));
+    if (next) { const n = next; void this.run(() => this.backend.upsertContact(n)); }
+  }
+  trashContact(id: string): void { this.updateContact(id, { deletedAt: new Date().toISOString() }); }
+  restoreContact(id: string): void { this.updateContact(id, { deletedAt: undefined }); }
+  async deleteContactForever(id: string): Promise<void> {
+    this._contacts.update((l) => l.filter((x) => x.id !== id));
+    await this.run(() => this.backend.deleteContactForever(id));
+  }
+
+  /* ---------------- enlaces (colección «links») */
+  linksIn(collectionId: string): LinkItem[] {
+    return this._links().filter((x) => x.collectionId === collectionId && !x.deletedAt).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+  saveLink(data: Omit<LinkItem, 'id' | 'createdAt' | 'updatedAt'>): LinkItem {
+    const ts = new Date().toISOString();
+    const x: LinkItem = { ...data, id: uid(), createdAt: ts, updatedAt: ts };
+    this._links.update((l) => [x, ...l]);
+    void this.run(() => this.backend.upsertLink(x));
+    return x;
+  }
+  updateLink(id: string, patch: Partial<LinkItem>): void {
+    let next: LinkItem | undefined;
+    this._links.update((l) => l.map((x) => (x.id === id ? (next = { ...x, ...patch, updatedAt: new Date().toISOString() }) : x)));
+    if (next) { const n = next; void this.run(() => this.backend.upsertLink(n)); }
+  }
+  trashLink(id: string): void { this.updateLink(id, { deletedAt: new Date().toISOString() }); }
+  restoreLink(id: string): void { this.updateLink(id, { deletedAt: undefined }); }
+  async deleteLinkForever(id: string): Promise<void> {
+    this._links.update((l) => l.filter((x) => x.id !== id));
+    await this.run(() => this.backend.deleteLinkForever(id));
+  }
+
   /** Copia de seguridad completa en JSON. */
   exportJson(): string {
-    return JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), settings: this.settings(), collections: this._collections(), entries: this._entries(), recipes: this._recipes(), dates: this._dates(), gifts: this._gifts() }, null, 2);
+    return JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), settings: this.settings(), collections: this._collections(), entries: this._entries(), recipes: this._recipes(), dates: this._dates(), gifts: this._gifts(), contacts: this._contacts(), links: this._links() }, null, 2);
   }
 
   private persistEntry(e: Entry): Promise<void> {

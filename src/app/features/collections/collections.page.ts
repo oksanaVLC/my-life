@@ -7,6 +7,7 @@ import { matches } from '../../core/search/normalize';
 import { CollectionCard } from '../../shared/ui/collection-card';
 import { Cover, Empty, ViewSwitch, YearSelect } from '../../shared/ui/controls';
 import { Icon } from '../../shared/ui/icon';
+import { collectionLink } from '../../core/data/collection-link';
 
 /**
  * Todas las colecciones. Ordenar por más recientes o nombre; filtro por año.
@@ -27,6 +28,7 @@ export class CollectionsPage {
   /** Orden manual mientras se reordena. */
   protected readonly order = signal<string[]>([]);
   protected readonly HOME = HOME_COLLECTIONS;
+  protected readonly linkOf = collectionLink;
   /** Colección recién mandada a la papelera (para «Deshacer») */
   protected readonly trashed = signal<{ id: string; name: string } | null>(history.state?.trashed ?? null);
   protected undo(): void {

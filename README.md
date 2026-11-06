@@ -18,7 +18,7 @@ Sin claves, la app arranca en **modo demo**: usa datos de ejemplo y lo guarda to
 ## Conectar Supabase (datos)
 
 1. Crea un proyecto en [supabase.com](https://supabase.com).
-2. Abre **SQL Editor** y ejecuta `supabase/migrations/0001_init.sql` después `0002_recipes.sql` (recetas) y `0003_dates_gifts.sql` (cumpleaños, fechas y regalos). El script crea:
+2. Abre **SQL Editor** y ejecuta `supabase/migrations/0001_init.sql` después `0002_recipes.sql` (recetas) `0003_dates_gifts.sql` (cumpleaños, fechas y regalos) y `0004_contacts_links.sql` (contactos y enlaces). El script crea:
    - las tablas `entries`, `collections` y `settings`;
    - la seguridad RLS (cada fila es solo de su dueña);
    - la búsqueda sin acentos;
@@ -101,6 +101,8 @@ El idioma se cambia sin recargar, se guarda en el dispositivo y en tus ajustes. 
 - Colecciones: reordenar las 12 de Inicio, abrir una colección (subcarpetas, tarjetas especiales que se pueden renombrar y aceptan arrastrar, selección, mover) y crear una nueva.
 - Buscar, Ajustes, Papelera y Login.
 - Editar colección (nombre, carpeta, tipo, portada con icono o foto recortada, Inicio).
+- Contactos: tabla editable por colección «contacts» (fecha automática, cada celda se guarda sola, pestañas entre tablas).
+- Enlaces: colección «links» con grupos en pestañas, favoritas, etiquetas desde la nota y edición en la tarjeta.
 - Calendario con vistas Día, Semana, Mes y Año (la vista y la fecha van en la dirección); «Apuntar» crea con esa fecha.
 - Cumpleaños y fechas importantes: calendario del mes, próximas fechas («en N días», «cumple 41»), añadir/editar/borrar; icono pequeño en el calendario de Inicio.
 - Futuros regalos: fotos (Cloudinary), precio, para quién, enlace, estado idea → comprado → regalado, filtros y aviso del próximo cumpleaños.
@@ -110,6 +112,4 @@ El idioma se cambia sin recargar, se guarda en el dispositivo y en tus ajustes. 
 **Pendiente (ver el PDF de diseño):**
 - Pantallas especiales:
   - Torneos;
-  - Enlaces de Diseño;
-  - tabla de Contactos.
 - Editor del collage y pantalla Subir imagen (conectada a `CloudinaryService`).

@@ -1,4 +1,4 @@
-import { Collection, Entry, Gift, ImportantDate, Recipe } from './models';
+import { Collection, Contact, Entry, Gift, ImportantDate, LinkItem, Recipe } from './models';
 
 const now = '2026-11-04T10:00:00.000Z';
 const c = (id: string, name: string, cover: Collection['cover'], extra: Partial<Collection> = {}): Collection => ({
@@ -124,4 +124,24 @@ export const DEMO_GIFTS: Gift[] = [
   gf('g-acuarelas', 'Kit de acuarelas', { forDateId: 'd-sofia', price: 25, note: 'Pinceles de varios tamaños.', url: 'https://example.com/acuarelas', photo: pic('hojas.svg') }),
   gf('g-concierto', 'Entradas para un concierto', { price: 60, note: 'Para alguien que le guste la música en directo.' }),
   gf('g-planta', 'Planta aromática en maceta', { price: 12, note: 'Regalo comodín: albahaca o romero.', status: 'given', photo: pic('sol.svg') }),
+];
+
+/* ------------------------------------------------------------------ contactos y enlaces de ejemplo */
+const ct = (id: string, collectionId: string, date: string, company: string, email: string, phone: string, notes = ''): Contact => ({
+  id, collectionId, date, company, email, phone, notes, createdAt: date + 'T10:00:00Z', updatedAt: date + 'T10:00:00Z',
+});
+export const DEMO_CONTACTS: Contact[] = [
+  ct('ct1', 'bt-c-dev', '2026-10-24', 'Estudio Nube', 'empleo@estudionube.es', '+34 600 000 101', 'Frontend React. Les escribí por LinkedIn.'),
+  ct('ct2', 'bt-c-dev', '2026-10-25', 'Código Mar', 'talento@codigomar.es', '+34 600 000 102', 'Piden Next.js y TypeScript.'),
+  ct('ct3', 'bt-c-dev', '2026-10-27', 'Pixel Norte', 'hola@pixelnorte.es', '', 'Prácticas 6 meses, remoto.'),
+  ct('ct4', 'bt-c-dev', '2026-10-28', 'Datos del Turia', 'rrhh@datosdelturia.es', '+34 600 000 104', 'Entrevista el 5 nov.'),
+  ct('ct5', 'bt-c-dev', '2026-10-29', 'Apps Levante', 'jobs@appslevante.es', '+34 600 000 105'),
+  ct('ct6', 'bt-c-prof', '2026-10-20', 'Academia Sol', 'info@academiasol.es', '+34 600 000 201', 'Inglés para adultos, tardes.'),
+  ct('ct7', 'bt-c-be', '2026-10-22', 'Naranja Logística', 'formacion@naranjalog.es', '', 'Clases in company, 2 h/semana.'),
+];
+const lk = (id: string, url: string, title: string, note: string, tags: string[], group: string, extra: Partial<LinkItem> = {}): LinkItem => ({
+  id, collectionId: 'diseno', url, title, note, tags, group, favorite: false, createdAt: '2026-10-31T10:00:00Z', updatedAt: '2026-10-31T10:00:00Z', ...extra,
+});
+export const DEMO_LINKS: LinkItem[] = [
+  lk('lk1', 'https://salonoramai.com', 'Hair Boutique · Salón Oramai', 'Peluquería en Madrid (Salamanca). Web minimal y aireada: fotos grandes, títulos de servicios en mayúsculas, tono delicado.', ['#peluquería', '#minimal', '#belleza'], 'Webs que destacan', { favorite: true }),
 ];

@@ -24,6 +24,8 @@ export const routes: Routes = [
       { path: 'recetas', loadComponent: () => import('./features/recipes/recipes.page').then((m) => m.RecipesPage) },
       { path: 'recetas/:id', loadComponent: () => import('./features/recipes/recipe-view.page').then((m) => m.RecipeViewPage) },
       { path: 'recetas/:id/editar', loadComponent: () => import('./features/recipes/recipe-edit.page').then((m) => m.RecipeEditPage) },
+      { path: 'contactos/:id', loadComponent: () => import('./features/special/contacts.page').then((m) => m.ContactsPage) },
+      { path: 'enlaces/:id', loadComponent: () => import('./features/special/links.page').then((m) => m.LinksPage) },
       { path: 'calendario', loadComponent: () => import('./features/calendar/calendar.page').then((m) => m.CalendarPage) },
       { path: 'cumpleanos', loadComponent: () => import('./features/dates/birthdays.page').then((m) => m.BirthdaysPage) },
       { path: 'regalos', loadComponent: () => import('./features/dates/gifts.page').then((m) => m.GiftsPage) },

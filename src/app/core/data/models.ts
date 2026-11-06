@@ -163,3 +163,36 @@ export interface Gift {
   updatedAt: string;
   deletedAt?: string;
 }
+
+/* ------------------------------------------------------------------ contactos y enlaces (dentro de colecciones especiales) */
+/** Una fila de la tabla de contactos de una colección de tipo «contacts». */
+export interface Contact {
+  id: string;
+  collectionId: string;
+  /** AAAA-MM-DD, se pone sola al añadir */
+  date: string;
+  company: string;
+  email: string;
+  phone: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+}
+
+/** Un enlace guardado en una colección de tipo «links». */
+export interface LinkItem {
+  id: string;
+  collectionId: string;
+  url: string;
+  title: string;
+  /** qué me gusta de ella */
+  note: string;
+  tags: string[];
+  /** pestaña: «Webs que destacan», «Paletas»… */
+  group: string;
+  favorite: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+}
