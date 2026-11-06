@@ -46,6 +46,8 @@ export interface Cover {
   /** nombre de icono o URL de imagen */
   value: string;
   tint?: Tint;
+  /** id de Cloudinary, si la portada es una foto subida */
+  publicId?: string;
 }
 
 export interface Collection {

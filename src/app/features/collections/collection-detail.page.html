@@ -2,13 +2,19 @@
   <app-crumbs [items]="crumbs()" />
   <div class="page-head">
     <div class="head-cover">
-      <span class="head-tile"><app-cover [collection]="c" [iconSize]="56" /></span>
+      <span class="head-tile">
+        <app-cover [collection]="c" [iconSize]="56" />
+        <a class="round cover-edit" [routerLink]="'/colecciones/' + c.id + '/editar'" [attr.aria-label]="'collectionEdit.edit' | t: { name: c.name }"><app-icon name="pencil" [size]="16" /></a>
+      </span>
       <div>
         <h1>{{ c.name }}</h1>
         <p class="lead">{{ 'entries.count' | tp: countIn(c) }} · {{ 'collection.subCount' | tp: subs().length }}</p>
       </div>
     </div>
-    <app-plus-menu [collectionId]="c.id" [where]="c.name" />
+    <div class="row-gap">
+      <a class="btn soft sm" [routerLink]="'/colecciones/' + c.id + '/editar'"><app-icon name="pencil" [size]="16" />{{ 'collectionEdit.button' | t }}</a>
+      <app-plus-menu [collectionId]="c.id" [where]="c.name" />
+    </div>
   </div>
 
   @if (toast()) { <p class="toast" role="status">{{ toast() }}</p> }

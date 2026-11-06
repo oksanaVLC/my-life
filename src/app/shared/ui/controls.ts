@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { Icon } from './icon';
 import { TPipe } from '../../core/i18n/t.pipe';
 import { Collection, Tint } from '../../core/data/models';
+import { cldUrl } from '../../core/images/cld-url';
 
 /** Selector Tarjetas / Lista (amarillo con relleno completo). */
 @Component({
@@ -69,7 +70,7 @@ export class Star {
     @switch (collection().cover.kind) {
       @case ('icon') { <span class="tile ic" [class]="'ht-' + tint()"><app-icon [name]="collection().cover.value" [size]="iconSize()" color="#2A2A2E" /></span> }
       @case ('logo') { <span class="tile logo"><img [src]="collection().cover.value" alt="" loading="lazy" /></span> }
-      @default { <img class="tile" [src]="collection().cover.value" alt="" loading="lazy" /> }
+      @default { <img class="tile" [src]="src()" alt="" loading="lazy" /> }
     }`,
   styles: `:host{display:block} .tile{display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:1/1;object-fit:cover}
     .logo{background:#F5F1E8} .logo img{width:72%;height:auto;object-fit:contain}`,
@@ -78,6 +79,7 @@ export class Cover {
   readonly collection = input.required<Collection>();
   readonly iconSize = input(88);
   protected tint(): Tint { return this.collection().cover.tint ?? 'g'; }
+  protected src(): string { return cldUrl(this.collection().cover.value, 800); }
 }
 
 /** Migas de pan; con muchos niveles se acortan con «…». */
