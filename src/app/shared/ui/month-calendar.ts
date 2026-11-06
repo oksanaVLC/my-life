@@ -3,15 +3,17 @@ import { Store } from '../../core/data/store';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TPipe } from '../../core/i18n/t.pipe';
 import { Icon } from './icon';
+import { DateIconC } from './date-icon';
+import { DateIcon } from '../../core/data/models';
 
-interface Cell { day: number; iso: string; count: number; important: boolean; today: boolean }
+interface Cell { day: number; iso: string; count: number; important: boolean; today: boolean; icon: DateIcon | null; names: string }
 
 const iso = (d: Date): string => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 /** Calendario del mes: días importantes en naranja, puntito si hay tareas. */
 @Component({
   selector: 'app-month-calendar',
-  imports: [Icon, TPipe],
+  imports: [Icon, DateIconC, TPipe],
   templateUrl: './month-calendar.html',
 })
 export class MonthCalendar {
@@ -39,15 +41,24 @@ export class MonthCalendar {
       const cur = byDay.get(e.date) ?? { n: 0, imp: false };
       byDay.set(e.date, { n: cur.n + 1, imp: cur.imp || e.prio || e.featured });
     }
+    // Cumpleaños y fechas importantes (se repiten cada año), si están activados en Ajustes.
+    const special = this.store.settings().showBirthdaysInCalendar ? this.store.dates().filter((x) => x.month === m.getMonth() + 1) : [];
     const out: (Cell | null)[] = Array.from({ length: first }, () => null);
     for (let d = 1; d <= days; d++) {
       const key = iso(new Date(m.getFullYear(), m.getMonth(), d));
       const info = byDay.get(key);
-      out.push({ day: d, iso: key, count: info?.n ?? 0, important: !!info?.imp, today: key === iso(this.today) });
+      const sp = special.filter((x) => x.day === d || (x.day > days && d === days));
+      out.push({ day: d, iso: key, count: info?.n ?? 0, important: !!info?.imp, today: key === iso(this.today), icon: sp[0]?.icon ?? null, names: sp.map((x) => x.name).join(', ') });
     }
     return out;
   });
   protected readonly dayEntries = computed(() => this.store.entries().filter((e) => e.date === this.selected() && !e.done));
+  /** Cumpleaños / fechas del día elegido */
+  protected readonly dayDates = computed(() => {
+    if (!this.store.settings().showBirthdaysInCalendar) return [];
+    const [, mm, dd] = this.selected().split('-').map(Number);
+    return this.store.dates().filter((x) => x.month === mm && x.day === dd);
+  });
   protected readonly dayLabel = computed(() =>
     new Intl.DateTimeFormat(this.i18n.lang(), { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(this.selected() + 'T12:00:00')),
   );

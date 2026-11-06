@@ -1,0 +1,121 @@
+<app-crumbs [items]="crumbs()" />
+<div class="page-head">
+  <div class="head-cover">
+    <span class="head-tile gift-cover"><app-icon name="gift" [size]="48" color="#2A2A2E" /></span>
+    <div>
+      <h1>{{ 'gifts.title' | t }}</h1>
+      <p class="lead">{{ 'gifts.count' | tp: stats().total }} · {{ 'gifts.withPerson' | tp: stats().withPerson }} · {{ 'gifts.bought' | tp: stats().bought }}</p>
+    </div>
+  </div>
+  <button type="button" class="btn primary" (click)="startAdd()"><app-icon name="plus" [size]="18" stroke="2.4" />{{ 'gifts.add' | t }}</button>
+</div>
+
+@if (next(); as n) {
+  <div class="gift-banner" role="note">
+    <app-date-icon icon="cake" [size]="22" />
+    <span class="gb-text"><strong>{{ n.name }}</strong> {{ 'gifts.bannerWhen' | t: { when: n.when } }}
+      ({{ n.days === 0 ? ('dates.today' | t) : n.days === 1 ? ('dates.tomorrow' | t) : ('dates.inDays' | tp: n.days) }})
+      · {{ n.ideas ? ('gifts.ideasSaved' | tp: n.ideas) : ('gifts.noIdeasYet' | t) }}</span>
+    @if (n.ideas) {
+      <button type="button" class="btn outline sm" (click)="person.set(n.id)">{{ 'gifts.seeIdeas' | t }}</button>
+    } @else {
+      <button type="button" class="btn outline sm" (click)="startAdd(n.id)">{{ 'gifts.addIdea' | t }}</button>
+    }
+  </div>
+}
+
+@if (toast()) {
+  <p class="toast" role="status">{{ toast() }}
+    @if (lastTrashed()) { <button type="button" class="link-btn" (click)="undo()">{{ 'recipes.undo' | t }}</button> }
+  </p>
+}
+
+@if (store.gifts().length) {
+  <div class="toolbar">
+    <div class="seg chips" role="group" [attr.aria-label]="'gifts.forWhom' | t">
+      @for (c of chips(); track c.id) {
+        <button type="button" class="chip-btn" [class.on]="person() === c.id" [attr.aria-pressed]="person() === c.id" (click)="person.set(c.id)">{{ c.label }} · {{ c.n }}</button>
+      }
+    </div>
+    <label class="status-select"><span>{{ 'gifts.statusLabel' | t }}</span>
+      <select class="input" [value]="status()" (change)="status.set($any(value($event)))">
+        <option value="all">{{ 'gifts.all' | t }}</option>
+        @for (s of statuses; track s) { <option [value]="s">{{ 'gifts.status.' + s | t }}</option> }
+      </select>
+    </label>
+    <app-view-switch [(value)]="view" />
+  </div>
+
+  @if (shown().length) {
+    <div class="gc-grid" [class.list]="view() === 'list'">
+      @for (g of shown(); track g.id) { <app-gift-card [gift]="g" [view]="view()" (edit)="edit($event)" /> }
+    </div>
+  } @else {
+    <app-empty icon="gift" [title]="'gifts.noMatch' | t" [text]="'recipes.noMatchText' | t" />
+  }
+} @else {
+  <app-empty icon="gift" [title]="'gifts.emptyTitle' | t" [text]="'gifts.emptyText' | t" />
+}
+
+<!-- Añadir / editar regalo -->
+<section class="card gift-form" #formCard aria-labelledby="h-gform">
+  <h2 id="h-gform">{{ (editingId() ? 'gifts.edit' : 'gifts.addIdeaTitle') | t }}</h2>
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate class="gift-form-grid">
+    <div class="gf-photo-col">
+      <label class="gf-drop" [class.over]="dragOver()" [class.has]="preview()" (dragover)="onDragOver($event)" (dragleave)="dragOver.set(false)" (drop)="onDrop($event)">
+        <input type="file" accept="image/*" class="sr-only" (change)="onFile($event)" />
+        @if (preview(); as p) {
+          <img [src]="p" alt="" />
+        } @else {
+          <app-icon name="download" [size]="30" color="#C2255C" />
+          <strong>{{ 'gifts.uploadPhoto' | t }}</strong>
+          <small>{{ 'gifts.uploadHint' | t }}</small>
+        }
+      </label>
+      @if (preview()) { <button type="button" class="btn soft sm" (click)="clearPhoto()"><app-icon name="x" [size]="14" stroke="2.4" />{{ 'recipe.removePhoto' | t }}</button> }
+    </div>
+
+    <div class="gf-fields">
+      <label class="field"><span class="lbl">{{ 'gifts.gift' | t }}</span>
+        <input #titleInput class="input" formControlName="title" [placeholder]="'gifts.giftPh' | t" [attr.aria-invalid]="submitted() && form.controls.title.invalid" />
+        @if (submitted() && form.controls.title.invalid) { <small class="danger-text" role="alert">{{ 'gifts.titleRequired' | t }}</small> }
+      </label>
+      <div class="gf-row">
+        <label class="field"><span class="lbl">{{ 'gifts.forWhom' | t }} <small>{{ 'gifts.optionalLower' | t }}</small></span>
+          <select class="input" formControlName="forDateId">
+            <option value="">{{ 'gifts.undecidedYet' | t }}</option>
+            @for (p of people(); track p.id) { <option [value]="p.id">{{ p.name }}</option> }
+          </select>
+        </label>
+        <label class="field"><span class="lbl">{{ 'gifts.price' | t }}</span>
+          <span class="input-unit"><input class="input" type="number" min="0" step="0.01" formControlName="price" /><span>€</span></span>
+        </label>
+      </div>
+      <label class="field"><span class="lbl">{{ 'gifts.url' | t }}</span>
+        <input class="input" type="url" formControlName="url" placeholder="https://" />
+      </label>
+      <label class="field"><span class="lbl">{{ 'gifts.note' | t }}</span>
+        <input class="input" formControlName="note" [placeholder]="'gifts.notePh' | t" />
+      </label>
+      @if (error()) { <p class="alert" role="alert">{{ error() }}</p> }
+
+      @if (confirmDelete()) {
+        <div class="confirm-box" role="alertdialog" aria-labelledby="gdel-q">
+          <p id="gdel-q" class="danger-text">{{ 'recipe.confirmDelete' | t: { title: form.value.title ?? '' } }}</p>
+          <div class="row-gap">
+            <button type="button" class="btn soft" (click)="confirmDelete.set(false)">{{ 'common.cancel' | t }}</button>
+            <button type="button" class="btn danger-solid" (click)="remove()">{{ 'entry.toTrash' | t }}</button>
+          </div>
+        </div>
+      } @else {
+        <div class="between wrap">
+          <div class="row-gap">
+            <button type="submit" class="btn primary" [disabled]="busy()"><app-icon name="check" [size]="18" stroke="2.6" />{{ (busy() ? 'cover.uploading' : 'gifts.save') | t }}</button>
+            @if (editingId()) { <button type="button" class="btn soft" (click)="cancel()">{{ 'common.cancel' | t }}</button> }
+          </div>
+          @if (editingId()) { <button type="button" class="btn danger" (click)="confirmDelete.set(true)"><app-icon name="trash" [size]="18" />{{ 'gifts.delete' | t }}</button> }
+        </div>
+      }
+    </div>
+  </form>
+</section>

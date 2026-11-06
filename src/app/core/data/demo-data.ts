@@ -1,4 +1,4 @@
-import { Collection, Entry, Recipe } from './models';
+import { Collection, Entry, Gift, ImportantDate, Recipe } from './models';
 
 const now = '2026-11-04T10:00:00.000Z';
 const c = (id: string, name: string, cover: Collection['cover'], extra: Partial<Collection> = {}): Collection => ({
@@ -18,7 +18,7 @@ export const DEMO_COLLECTIONS: Collection[] = [
   c('torneos', 'Torneos', { kind: 'icon', value: 'chess', tint: 'l' }, { homeOrder: 8, kind: 'tournaments', updatedAt: '2026-10-19T10:00:00Z' }),
   c('recetas', 'Recetas', { kind: 'img', value: 'img/covers/crepes.jpg' }, { homeOrder: 9, kind: 'recipes', route: '/recetas', parentId: undefined, updatedAt: '2026-10-27T10:00:00Z' }),
   c('busqueda', 'Búsqueda de trabajo', { kind: 'icon', value: 'job', tint: 'g' }, { homeOrder: 10, updatedAt: '2026-11-03T10:00:00Z' }),
-  c('cumples', 'Cumpleaños', { kind: 'icon', value: 'cake', tint: 'p' }, { homeOrder: 11, kind: 'birthdays', updatedAt: '2026-10-26T10:00:00Z' }),
+  c('cumples', 'Cumpleaños', { kind: 'icon', value: 'cake', tint: 'p' }, { homeOrder: 11, kind: 'birthdays', route: '/cumpleanos', updatedAt: '2026-10-26T10:00:00Z' }),
   c('salud', 'Salud', { kind: 'icon', value: 'health', tint: 'b' }, { updatedAt: '2026-10-15T10:00:00Z' }),
   // subcarpetas
   c('casa-tareas', 'Tareas de casa', { kind: 'icon', value: 'folder', tint: 'g' }, { parentId: 'casa' }),
@@ -96,4 +96,32 @@ export const DEMO_RECIPES: Recipe[] = [
   r('rc-sopa', 'Sopa de verduras', { category: 'dinner', minutes: 35, ingredients: ['2 puerros', '2 patatas', '1 calabacín', '1 l caldo'] }),
   r('rc-garbanzos', 'Guiso de garbanzos', { category: 'lunch', minutes: 50, difficulty: 'medium', rating: 4, source: 'link', photos: photo('lentejas.svg') }),
   r('rc-quinoa', 'Bol de quinoa y aguacate', { category: 'lunch', minutes: 20, servings: 2, source: 'capture' }),
+];
+
+/* ------------------------------------------------------------------ cumpleaños, fechas y regalos de ejemplo */
+const dt = (id: string, name: string, day: number, month: number, extra: Partial<ImportantDate> = {}): ImportantDate => ({
+  id, kind: 'birthday', name, day, month, icon: 'cake', plan: '', createdAt: '2026-09-01T10:00:00Z', updatedAt: '2026-09-01T10:00:00Z', ...extra,
+});
+export const DEMO_DATES: ImportantDate[] = [
+  dt('d-ana', 'Ana', 8, 11, { year: 1985 }),
+  dt('d-leo', 'Leo, amigo del cole', 15, 11, { year: 2017 }),
+  dt('d-marta', 'Abuela Marta', 21, 11, { year: 1950 }),
+  dt('d-carlos', 'Carlos', 3, 12, { year: 1988 }),
+  dt('d-sofia', 'Sofía', 14, 2, { year: 2016 }),
+  dt('d-trabajo', 'Encontré trabajo', 3, 11, { kind: 'event', icon: 'fireworks', year: 2025, plan: 'Celebrar con una cena' }),
+  dt('d-boda', 'Aniversario de boda', 28, 11, { kind: 'event', icon: 'cheers', year: 2014, plan: 'Reservar restaurante' }),
+];
+
+const gf = (id: string, title: string, extra: Partial<Gift> = {}): Gift => ({
+  id, title, note: '', status: 'idea', createdAt: '2026-10-01T10:00:00Z', updatedAt: '2026-10-01T10:00:00Z', ...extra,
+});
+const pic = (file: string) => ({ publicId: 'demo-' + file, url: 'img/collage/' + file });
+export const DEMO_GIFTS: Gift[] = [
+  gf('g-ajedrez', 'Tablero de ajedrez magnético', { forDateId: 'd-leo', price: 30, note: 'De viaje, para jugar en el coche.', url: 'https://example.com/ajedrez', photo: pic('ajedrez.svg') }),
+  gf('g-taza', 'Taza de cerámica hecha a mano', { forDateId: 'd-ana', price: 18, note: 'Le encanta el café por la mañana.', url: 'https://example.com/taza', photo: pic('cafe.svg') }),
+  gf('g-bufanda', 'Bufanda de lana suave', { forDateId: 'd-ana', price: 35, note: 'Color verde oscuro o mostaza.' }),
+  gf('g-album', 'Álbum de fotos para rellenar', { forDateId: 'd-marta', price: 22, note: 'Con fotos de este verano impresas.', status: 'bought' }),
+  gf('g-acuarelas', 'Kit de acuarelas', { forDateId: 'd-sofia', price: 25, note: 'Pinceles de varios tamaños.', url: 'https://example.com/acuarelas', photo: pic('hojas.svg') }),
+  gf('g-concierto', 'Entradas para un concierto', { price: 60, note: 'Para alguien que le guste la música en directo.' }),
+  gf('g-planta', 'Planta aromática en maceta', { price: 12, note: 'Regalo comodín: albahaca o romero.', status: 'given', photo: pic('sol.svg') }),
 ];

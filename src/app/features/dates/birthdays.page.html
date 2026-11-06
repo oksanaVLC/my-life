@@ -1,0 +1,176 @@
+<app-crumbs [items]="crumbs()" />
+<div class="page-head">
+  <div class="head-cover">
+    <span class="head-ic"><app-date-icon icon="cake" [size]="40" /></span>
+    <div>
+      <h1>{{ 'dates.title' | t }}</h1>
+      <p class="lead">{{ 'dates.lead' | t }}</p>
+    </div>
+  </div>
+  <button type="button" class="btn white" (click)="startAdd()"><app-date-icon icon="cake" [size]="18" />{{ 'dates.add' | t }}</button>
+</div>
+
+@if (toast()) {
+  <p class="toast" role="status">{{ toast() }}
+    @if (lastTrashed()) { <button type="button" class="link-btn" (click)="undo()">{{ 'recipes.undo' | t }}</button> }
+  </p>
+}
+
+<div class="bd-layout">
+  <!-- Calendario del mes -->
+  <section class="card bd-cal" [attr.aria-label]="title()">
+    <div class="bd-cal-head">
+      <div class="row-gap">
+        <button type="button" class="round soft" (click)="shift(-1)" [attr.aria-label]="'calendar.prev' | t"><app-icon name="back" [size]="18" stroke="2.4" /></button>
+        <h2>{{ title() }}</h2>
+        <button type="button" class="round soft" (click)="shift(1)" [attr.aria-label]="'calendar.next' | t"><app-icon name="chev" [size]="18" stroke="2.4" /></button>
+      </div>
+      <ul class="legend sm">
+        <li><app-date-icon icon="cake" [size]="16" />{{ 'dates.kind.birthday' | t }}</li>
+        <li><app-date-icon icon="star" [size]="16" />{{ 'dates.kind.event' | t }}</li>
+      </ul>
+    </div>
+    <div class="bd-grid bd-wd" aria-hidden="true">
+      @for (w of weekdays(); track $index) { <span>{{ w }}</span> }
+    </div>
+    <div class="bd-grid">
+      @for (c of cells(); track $index) {
+        @if (c) {
+          <div class="bd-day" [class.we]="c.weekend" [class.today]="c.today" [class.has]="c.dates.length">
+            <span class="bd-n">{{ c.day }}</span>
+            @for (d of c.dates; track d.id) {
+              <button type="button" class="bd-chip" [class.ev]="d.kind === 'event'" (click)="edit(d)" [title]="d.name" [attr.aria-label]="'dates.editX' | t: { name: d.name }">
+                <app-date-icon [icon]="d.icon" [size]="14" /><span>{{ d.name }}</span>
+              </button>
+            }
+          </div>
+        } @else { <div class="bd-day empty"></div> }
+      }
+    </div>
+  </section>
+
+  <div class="bd-side">
+    <!-- Tarjeta especial: Futuros regalos -->
+    <a class="special gift-card" routerLink="/regalos">
+      <span class="special-cover gift-cover"><app-icon name="gift" [size]="56" color="#2A2A2E" /></span>
+      <span class="special-body">
+        <span class="badge-dark">{{ 'collection.special' | t }}</span>
+        <span class="special-title">{{ 'gifts.title' | t }}</span>
+        <span class="muted">{{ 'gifts.count' | tp: giftStats().total }}
+          @if (giftStats().next; as n) { · {{ 'gifts.forNext' | t: { n: n.n, name: n.name, days: n.days } }} }
+        </span>
+        @if (giftStats().photos.length) {
+          <span class="gift-thumbs">
+            @for (p of giftStats().photos; track p) { <img [src]="p" alt="" /> }
+            @if (giftStats().more) { <span class="more">+{{ giftStats().more }}</span> }
+          </span>
+        }
+      </span>
+      <app-icon name="chev" [size]="20" class="special-go" />
+    </a>
+
+    <!-- Próximas fechas -->
+    <section class="card bd-next" aria-labelledby="h-next">
+      <h2 id="h-next">{{ 'dates.upcoming' | t }}</h2>
+      @if (upcoming().length) {
+        <ul>
+          @for (d of shownUpcoming(); track d.id) {
+            <li>
+              <button type="button" class="bd-item" (click)="edit(d)">
+                <span class="bd-ic" [class.ev]="d.kind === 'event'"><app-date-icon [icon]="d.icon" [size]="24" /></span>
+                <span class="grow">
+                  <strong>{{ d.name }}</strong>
+                  <small>{{ dayMonth(d) }}
+                    @if (years(d) !== null) { · {{ (d.kind === 'birthday' ? 'dates.turns' : 'dates.years') | tp: years(d)! }} }
+                  </small>
+                  @if (detail(d); as x) { @if (x.key) { <small class="muted">{{ x.key | t: { text: x.text ?? '' } }}</small> } }
+                </span>
+                <span class="bd-when" [class.soon]="until(d) <= 7">
+                  {{ until(d) === 0 ? ('dates.today' | t) : until(d) === 1 ? ('dates.tomorrow' | t) : ('dates.inDays' | tp: until(d)) }}
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+        @if (upcoming().length > 6) {
+          <button type="button" class="btn soft sm self-start" (click)="showAll.set(!showAll())">{{ (showAll() ? 'dates.showLess' : 'dates.showAll') | t }}</button>
+        }
+      } @else {
+        <p class="muted">{{ 'dates.none' | t }}</p>
+      }
+    </section>
+  </div>
+</div>
+
+<!-- Añadir / editar fecha -->
+<section class="card bd-form" #formCard aria-labelledby="h-form">
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <div class="between wrap">
+      <h2 id="h-form">{{ (editingId() ? 'dates.edit' : 'dates.add') | t }}</h2>
+      <div class="seg" role="group" [attr.aria-label]="'dates.kindLabel' | t">
+        <button type="button" [class.on]="form.value.kind === 'birthday'" [attr.aria-pressed]="form.value.kind === 'birthday'" (click)="setKind('birthday')">{{ 'dates.kind.birthday' | t }}</button>
+        <button type="button" [class.on]="form.value.kind === 'event'" [attr.aria-pressed]="form.value.kind === 'event'" (click)="setKind('event')">{{ 'dates.kind.event' | t }}</button>
+      </div>
+    </div>
+
+    <div class="bd-fields">
+      <label class="field grow2"><span class="lbl">{{ (form.value.kind === 'birthday' ? 'dates.who' : 'dates.what') | t }}</span>
+        <input #nameInput class="input" formControlName="name" [placeholder]="(form.value.kind === 'birthday' ? 'dates.whoPh' : 'dates.whatPh') | t"
+          [attr.aria-invalid]="submitted() && form.controls.name.invalid" />
+        @if (submitted() && form.controls.name.invalid) { <small class="danger-text" role="alert">{{ 'dates.nameRequired' | t }}</small> }
+      </label>
+      <fieldset class="field">
+        <legend class="lbl">{{ 'dates.dayMonth' | t }}</legend>
+        <div class="row-gap">
+          <select class="input" formControlName="day" [attr.aria-label]="'dates.day' | t" [attr.aria-invalid]="badDay()">
+            @for (d of days; track d) { <option [ngValue]="d">{{ d }}</option> }
+          </select>
+          <select class="input" formControlName="month" [attr.aria-label]="'dates.month' | t">
+            @for (m of months(); track m.value) { <option [ngValue]="m.value">{{ m.label }}</option> }
+          </select>
+        </div>
+        @if (badDay()) { <small class="danger-text" role="alert">{{ 'dates.badDay' | t }}</small> }
+      </fieldset>
+      <label class="field"><span class="lbl">{{ 'dates.yearOpt' | t }}</span>
+        <input class="input" type="number" min="1900" max="2200" formControlName="year" placeholder="1985" />
+      </label>
+    </div>
+
+    @if (form.value.kind === 'event') {
+      <fieldset class="field">
+        <legend class="lbl">{{ 'dates.icon' | t }}</legend>
+        <div class="bd-icons">
+          @for (i of icons; track i) {
+            <label class="bd-icon-opt" [class.on]="form.value.icon === i">
+              <input type="radio" formControlName="icon" [value]="i" class="sr-only" />
+              <app-date-icon [icon]="i" [size]="26" /><span>{{ 'dates.icons.' + i | t }}</span>
+            </label>
+          }
+        </div>
+      </fieldset>
+    }
+
+    <label class="field"><span class="lbl">{{ 'dates.planLabel' | t }}</span>
+      <input class="input" formControlName="plan" [placeholder]="'recipe.optional' | t" />
+    </label>
+
+    @if (confirmDelete()) {
+      <div class="confirm-box" role="alertdialog" aria-labelledby="del-q">
+        <p id="del-q" class="danger-text">{{ 'recipe.confirmDelete' | t: { title: form.value.name ?? '' } }}</p>
+        <div class="row-gap">
+          <button type="button" class="btn soft" (click)="confirmDelete.set(false)">{{ 'common.cancel' | t }}</button>
+          <button type="button" class="btn danger-solid" (click)="remove()">{{ 'entry.toTrash' | t }}</button>
+        </div>
+      </div>
+    } @else {
+      <div class="between wrap">
+        <div class="row-gap">
+          <button type="submit" class="btn primary"><app-icon name="check" [size]="18" stroke="2.6" />{{ 'dates.save' | t }}</button>
+          @if (editingId()) { <button type="button" class="btn soft" (click)="cancel()">{{ 'common.cancel' | t }}</button> }
+        </div>
+        @if (editingId()) { <button type="button" class="btn danger" (click)="confirmDelete.set(true)"><app-icon name="trash" [size]="18" />{{ 'dates.delete' | t }}</button> }
+      </div>
+    }
+    <small class="muted">{{ 'dates.repeats' | t }}</small>
+  </form>
+</section>

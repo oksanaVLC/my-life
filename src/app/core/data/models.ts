@@ -122,3 +122,44 @@ export interface Recipe {
 
 export const RECIPE_CATEGORIES: RecipeCategory[] = ['breakfast', 'lunch', 'dinner', 'dessert'];
 export const DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard'];
+
+/* ------------------------------------------------------------------ cumpleaños, fechas y regalos */
+export type DateKind = 'birthday' | 'event';
+export type DateIcon = 'cake' | 'fireworks' | 'cheers' | 'heart' | 'star' | 'travel' | 'graduation';
+export const EVENT_ICONS: DateIcon[] = ['fireworks', 'cheers', 'heart', 'star', 'travel', 'graduation'];
+
+/** Se repite cada año. */
+export interface ImportantDate {
+  id: string;
+  kind: DateKind;
+  /** quién cumple o qué se celebra */
+  name: string;
+  day: number;
+  month: number;
+  /** año de nacimiento o del suceso (opcional), para «cumple 41» o «12 años» */
+  year?: number;
+  icon: DateIcon;
+  plan: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+}
+
+export type GiftStatus = 'idea' | 'bought' | 'given';
+export const GIFT_STATUSES: GiftStatus[] = ['idea', 'bought', 'given'];
+
+export interface Gift {
+  id: string;
+  title: string;
+  /** para quién: un cumpleaños; vacío = sin decidir */
+  forDateId?: string;
+  /** euros */
+  price?: number;
+  url?: string;
+  note: string;
+  photo?: ImageRef;
+  status: GiftStatus;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+}

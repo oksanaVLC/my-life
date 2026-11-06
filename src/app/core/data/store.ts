@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { BACKEND } from './backend';
 import { LoadingService } from '../loading/loading.service';
-import { Collection, Entry, EntryType, HOME_COLLECTIONS, Recipe, Settings, TRASH_DAYS } from './models';
+import { Collection, Entry, EntryType, Gift, HOME_COLLECTIONS, ImportantDate, Recipe, Settings, TRASH_DAYS } from './models';
 
 const DEFAULT_SETTINGS: Settings = {
   lang: 'es',
@@ -28,6 +28,8 @@ export class Store {
   private readonly _entries = signal<Entry[]>([]);
   private readonly _collections = signal<Collection[]>([]);
   private readonly _recipes = signal<Recipe[]>([]);
+  private readonly _dates = signal<ImportantDate[]>([]);
+  private readonly _gifts = signal<Gift[]>([]);
   readonly settings = signal<Settings>(DEFAULT_SETTINGS);
   readonly saveState = signal<SaveState>('saved');
   readonly loaded = signal(false);
@@ -49,6 +51,10 @@ export class Store {
     const deleted = new Set(all.filter((c) => c.deletedAt).map((c) => c.id));
     return all.filter((c) => c.deletedAt && !(c.parentId && deleted.has(c.parentId)));
   });
+  readonly dates = computed(() => this._dates().filter((d) => !d.deletedAt));
+  readonly dateTrash = computed(() => this._dates().filter((d) => !!d.deletedAt));
+  readonly gifts = computed(() => this._gifts().filter((g) => !g.deletedAt));
+  readonly giftTrash = computed(() => this._gifts().filter((g) => !!g.deletedAt));
   readonly recipeTrash = computed(() => this._recipes().filter((r) => !!r.deletedAt));
   /** La colección «Recetas» (la primera de tipo recetas), para las migas y como colección por defecto. */
   readonly recipesCollection = computed(() => this.collections().find((c) => c.kind === 'recipes'));
@@ -65,6 +71,8 @@ export class Store {
     this._entries.set(data.entries);
     this._collections.set(data.collections);
     this._recipes.set(data.recipes);
+    this._dates.set(data.dates ?? []);
+    this._gifts.set(data.gifts ?? []);
     // Recetas nuevas que se quedaron vacías (se cerró la ventana sin escribir nada): fuera.
     const old = Date.now() - 10 * 60_000;
     for (const r of data.recipes) {
@@ -136,6 +144,8 @@ export class Store {
   async emptyTrash(): Promise<void> {
     for (const e of this.trash()) await this.deleteForever(e.id);
     for (const r of this.recipeTrash()) await this.deleteRecipeForever(r.id);
+    for (const g of this.giftTrash()) await this.deleteGiftForever(g.id);
+    for (const d of this.dateTrash()) await this.deleteDateForever(d.id);
     for (const c of this.collectionTrash()) await this.deleteCollectionForever(c.id);
   }
 
@@ -266,9 +276,58 @@ export class Store {
     await this.run(() => this.backend.deleteRecipeForever(id));
   }
 
+  /* ---------------- cumpleaños y fechas */
+  date(id: string | undefined): ImportantDate | undefined {
+    return id ? this._dates().find((d) => d.id === id && !d.deletedAt) : undefined;
+  }
+  saveDate(d: Omit<ImportantDate, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }): ImportantDate {
+    const ts = new Date().toISOString();
+    const old = d.id ? this._dates().find((x) => x.id === d.id) : undefined;
+    const next: ImportantDate = { ...(old ?? { id: uid(), createdAt: ts }), ...d, id: old?.id ?? uid(), updatedAt: ts } as ImportantDate;
+    this._dates.update((l) => (old ? l.map((x) => (x.id === next.id ? next : x)) : [...l, next]));
+    void this.run(() => this.backend.upsertDate(next));
+    return next;
+  }
+  private patchDate(id: string, patch: Partial<ImportantDate>): void {
+    let next: ImportantDate | undefined;
+    this._dates.update((l) => l.map((d) => (d.id === id ? (next = { ...d, ...patch, updatedAt: new Date().toISOString() }) : d)));
+    if (next) { const n = next; void this.run(() => this.backend.upsertDate(n)); }
+  }
+  trashDate(id: string): void { this.patchDate(id, { deletedAt: new Date().toISOString() }); }
+  restoreDate(id: string): void { this.patchDate(id, { deletedAt: undefined }); }
+  async deleteDateForever(id: string): Promise<void> {
+    this._dates.update((l) => l.filter((d) => d.id !== id));
+    this._gifts.update((l) => l.map((g) => (g.forDateId === id ? { ...g, forDateId: undefined } : g)));
+    await this.run(() => this.backend.deleteDateForever(id));
+  }
+
+  /* ---------------- regalos */
+  gift(id: string): Gift | undefined {
+    return this._gifts().find((g) => g.id === id);
+  }
+  saveGift(g: Omit<Gift, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }): Gift {
+    const ts = new Date().toISOString();
+    const old = g.id ? this._gifts().find((x) => x.id === g.id) : undefined;
+    const next = { ...(old ?? { createdAt: ts }), ...g, id: old?.id ?? uid(), updatedAt: ts } as Gift;
+    this._gifts.update((l) => (old ? l.map((x) => (x.id === next.id ? next : x)) : [next, ...l]));
+    void this.run(() => this.backend.upsertGift(next));
+    return next;
+  }
+  updateGift(id: string, patch: Partial<Gift>): void {
+    let next: Gift | undefined;
+    this._gifts.update((l) => l.map((g) => (g.id === id ? (next = { ...g, ...patch, updatedAt: new Date().toISOString() }) : g)));
+    if (next) { const n = next; void this.run(() => this.backend.upsertGift(n)); }
+  }
+  trashGift(id: string): void { this.updateGift(id, { deletedAt: new Date().toISOString() }); }
+  restoreGift(id: string): void { this.updateGift(id, { deletedAt: undefined }); }
+  async deleteGiftForever(id: string): Promise<void> {
+    this._gifts.update((l) => l.filter((g) => g.id !== id));
+    await this.run(() => this.backend.deleteGiftForever(id));
+  }
+
   /** Copia de seguridad completa en JSON. */
   exportJson(): string {
-    return JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), settings: this.settings(), collections: this._collections(), entries: this._entries(), recipes: this._recipes() }, null, 2);
+    return JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), settings: this.settings(), collections: this._collections(), entries: this._entries(), recipes: this._recipes(), dates: this._dates(), gifts: this._gifts() }, null, 2);
   }
 
   private persistEntry(e: Entry): Promise<void> {

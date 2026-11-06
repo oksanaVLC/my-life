@@ -12,7 +12,9 @@ import { CoverCrop } from '../../shared/ui/cover-crop';
 import { Icon } from '../../shared/ui/icon';
 import { collectionOptions } from './collection-options';
 
-const KINDS: CollectionKind[] = ['generic', 'special', 'contacts', 'recipes', 'gifts', 'links'];
+const KINDS: CollectionKind[] = ['generic', 'special', 'contacts', 'recipes', 'birthdays', 'gifts', 'links'];
+/** Tipos con pantalla propia */
+const KIND_ROUTES: Partial<Record<CollectionKind, string>> = { recipes: '/recetas', birthdays: '/cumpleanos', gifts: '/regalos' };
 
 /**
  * Crear o editar una colección (o subcarpeta): nombre, dónde va, tipo, portada y si sale en Inicio.
@@ -185,8 +187,8 @@ export class CollectionFormPage {
     if (!cover) return this.busy.set(false);
 
     const c = this.editing();
-    // Una colección de tipo Recetas abre el recetario.
-    const route = v.kind === 'recipes' ? '/recetas' : c?.route === '/recetas' ? undefined : c?.route;
+    // Las colecciones de tipo Recetas, Cumpleaños o Regalos abren su pantalla propia.
+    const route = KIND_ROUTES[v.kind] ?? (Object.values(KIND_ROUTES).includes(c?.route ?? '') ? undefined : c?.route);
     const data = { name: v.name.trim(), kind: v.kind, parentId: v.parentId || undefined, cover, route };
     if (c) {
       this.store.updateCollection(c.id, { ...data, homeOrder: this.homeOrder(v.home, v.parentId, c.homeOrder) });

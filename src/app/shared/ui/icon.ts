@@ -50,6 +50,10 @@ export const ICONS: Record<string, string> = {
   image: '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M20.5 16l-5-5-8.5 8.5"/>',
   minus: '<path d="M5 12h14"/>',
   external: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  fireworks: '<path d="M12 12V3M12 12l6.4-6.4M12 12h9M12 12l6.4 6.4M12 12v9M12 12l-6.4 6.4M12 12H3M12 12L5.6 5.6"/><circle cx="12" cy="12" r="1.6"/>',
+  cheers: '<path d="M6 3h5l-.6 5.2A2.6 2.6 0 0 1 7.8 10.5h0A2.6 2.6 0 0 1 5.2 8.2zM8.5 10.5V18M6 18h5M13 3h5l.8 5.2a2.6 2.6 0 0 1-2.6 2.3h0a2.6 2.6 0 0 1-2.6-2.3zM16.2 10.5V18M13.7 18h5"/>',
+  travel: '<path d="M21 4.5L3 11l6.5 2.5L12 20l2.5-5.5L21 4.5zM9.5 13.5L21 4.5"/>',
+  graduation: '<path d="M2.5 9L12 5l9.5 4L12 13zM6.5 11v4.5c1.7 1.5 3.5 2 5.5 2s3.8-.5 5.5-2V11M21.5 9v5"/>',
   dots: '<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>',
 };
 

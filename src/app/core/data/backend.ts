@@ -1,8 +1,8 @@
 import { InjectionToken, inject } from '@angular/core';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { SupabaseService, isDemo } from '../supabase/supabase';
-import { Collection, Entry, Recipe, Settings } from './models';
-import { DEMO_COLLECTIONS, DEMO_ENTRIES, DEMO_RECIPES } from './demo-data';
+import { Collection, Entry, Gift, ImportantDate, Recipe, Settings } from './models';
+import { DEMO_COLLECTIONS, DEMO_DATES, DEMO_ENTRIES, DEMO_GIFTS, DEMO_RECIPES } from './demo-data';
 
 /** Lo que la app necesita del almacenamiento. Dos implementaciones: Supabase y demo. */
 export interface Backend {
@@ -10,13 +10,17 @@ export interface Backend {
   upsertEntry(e: Entry): Promise<void>;
   upsertRecipe(r: Recipe): Promise<void>;
   deleteRecipeForever(id: string): Promise<void>;
+  upsertDate(d: ImportantDate): Promise<void>;
+  deleteDateForever(id: string): Promise<void>;
+  upsertGift(g: Gift): Promise<void>;
+  deleteGiftForever(id: string): Promise<void>;
   upsertCollection(c: Collection): Promise<void>;
   deleteCollectionForever(id: string): Promise<void>;
   deleteEntryForever(id: string): Promise<void>;
   saveSettings(s: Settings): Promise<void>;
 }
 
-export interface AllData { entries: Entry[]; collections: Collection[]; recipes: Recipe[]; settings: Partial<Settings> | null }
+export interface AllData { entries: Entry[]; collections: Collection[]; recipes: Recipe[]; dates: ImportantDate[]; gifts: Gift[]; settings: Partial<Settings> | null }
 
 export const BACKEND = new InjectionToken<Backend>('BACKEND', {
   providedIn: 'root',
@@ -64,6 +68,12 @@ const rowToRecipe = (r: Row): Recipe => ({
   createdAt: r['created_at'] as string, updatedAt: r['updated_at'] as string, deletedAt: (r['deleted_at'] as string) ?? undefined,
 });
 
+/** Para tablas sencillas: camelCase ↔ snake_case, undefined ↔ null. */
+const toRow = (o: object): Row =>
+  Object.fromEntries(Object.entries(o).map(([k, v]) => [k.replace(/[A-Z]/g, (m) => '_' + m.toLowerCase()), v ?? null]));
+const fromRow = <T>(r: Row): T =>
+  Object.fromEntries(Object.entries(r).filter(([k]) => k !== 'user_id').map(([k, v]) => [k.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase()), v ?? undefined])) as T;
+
 export class SupabaseBackend implements Backend {
   constructor(private readonly supabase: SupabaseService) {}
 
@@ -76,20 +86,26 @@ export class SupabaseBackend implements Backend {
   async loadAll(signal?: AbortSignal) {
     const sb = await this.sb();
     const abort = signal ?? new AbortController().signal;
-    const [e, c, r, s] = await Promise.all([
+    const [e, c, r, d, g, s] = await Promise.all([
       sb.from('entries').select('*').abortSignal(abort),
       sb.from('collections').select('*').abortSignal(abort),
       sb.from('recipes').select('*').abortSignal(abort),
+      sb.from('important_dates').select('*').abortSignal(abort),
+      sb.from('gifts').select('*').abortSignal(abort),
       sb.from('settings').select('data').maybeSingle(),
     ]);
     if (e.error) throw e.error;
     if (c.error) throw c.error;
     // Si aún no se ha ejecutado 0002_recipes.sql, la app sigue funcionando sin recetas.
     if (r.error) console.warn('Recetas no disponibles (¿falta ejecutar 0002_recipes.sql?):', r.error.message);
+    if (d.error || g.error) console.warn('Fechas y regalos no disponibles (¿falta ejecutar 0003_dates_gifts.sql?):', (d.error ?? g.error)!.message);
     return {
       entries: (e.data ?? []).map(rowToEntry),
       collections: (c.data ?? []).map(rowToColl),
       recipes: r.error ? [] : (r.data ?? []).map(rowToRecipe),
+      dates: d.error ? [] : (d.data ?? []).map((x) => fromRow<ImportantDate>(x)),
+      // price llega como texto (numeric): a número
+      gifts: g.error ? [] : (g.data ?? []).map((x) => { const gift = fromRow<Gift>(x); return { ...gift, price: gift.price == null ? undefined : Number(gift.price) }; }),
       settings: (s.data?.data as Partial<Settings>) ?? null,
     };
   }
@@ -117,6 +133,18 @@ export class SupabaseBackend implements Backend {
     const { error } = await (await this.sb()).from('recipes').delete().eq('id', id);
     if (error) throw error;
   }
+  private async upsert(table: string, o: object) {
+    const { error } = await (await this.sb()).from(table).upsert(toRow(o));
+    if (error) throw error;
+  }
+  private async remove(table: string, id: string) {
+    const { error } = await (await this.sb()).from(table).delete().eq('id', id);
+    if (error) throw error;
+  }
+  upsertDate(d: ImportantDate) { return this.upsert('important_dates', d); }
+  deleteDateForever(id: string) { return this.remove('important_dates', id); }
+  upsertGift(g: Gift) { return this.upsert('gifts', g); }
+  deleteGiftForever(id: string) { return this.remove('gifts', id); }
   async saveSettings(s: Settings) {
     const { error } = await (await this.sb()).from('settings').upsert({ data: s });
     if (error) throw error;
@@ -132,10 +160,11 @@ export class DemoBackend implements Backend {
       const raw = localStorage.getItem(KEY);
       if (raw) {
         const d = JSON.parse(raw) as AllData;
-        return { ...d, recipes: d.recipes ?? structuredClone(DEMO_RECIPES) }; // datos guardados antes de existir las recetas
+        // datos guardados antes de existir recetas, fechas o regalos
+        return { ...d, recipes: d.recipes ?? structuredClone(DEMO_RECIPES), dates: d.dates ?? structuredClone(DEMO_DATES), gifts: d.gifts ?? structuredClone(DEMO_GIFTS) };
       }
     } catch { /* sin almacenamiento */ }
-    return { entries: structuredClone(DEMO_ENTRIES), collections: structuredClone(DEMO_COLLECTIONS), recipes: structuredClone(DEMO_RECIPES), settings: null };
+    return { entries: structuredClone(DEMO_ENTRIES), collections: structuredClone(DEMO_COLLECTIONS), recipes: structuredClone(DEMO_RECIPES), dates: structuredClone(DEMO_DATES), gifts: structuredClone(DEMO_GIFTS), settings: null };
   }
   private write(d: ReturnType<DemoBackend['read']>) {
     try { localStorage.setItem(KEY, JSON.stringify(d)); } catch { /* sin almacenamiento */ }
@@ -177,6 +206,23 @@ export class DemoBackend implements Backend {
     d.recipes = d.recipes.filter((x) => x.id !== id);
     this.write(d);
   }
+  private put<K extends 'dates' | 'gifts'>(key: K, item: AllData[K][number]) {
+    const d = this.read();
+    const list = d[key] as { id: string }[];
+    const i = list.findIndex((x) => x.id === item.id);
+    if (i >= 0) list[i] = item; else list.push(item);
+    this.write(d);
+  }
+  private drop(key: 'dates' | 'gifts', id: string) {
+    const d = this.read();
+    (d[key] as { id: string }[]) = (d[key] as { id: string }[]).filter((x) => x.id !== id);
+    if (key === 'dates') d.gifts = d.gifts.map((g) => (g.forDateId === id ? { ...g, forDateId: undefined } : g));
+    this.write(d);
+  }
+  async upsertDate(x: ImportantDate) { this.put('dates', x); }
+  async deleteDateForever(id: string) { this.drop('dates', id); }
+  async upsertGift(x: Gift) { this.put('gifts', x); }
+  async deleteGiftForever(id: string) { this.drop('gifts', id); }
   async saveSettings(s: Settings) {
     const d = this.read();
     d.settings = s;

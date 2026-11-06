@@ -18,7 +18,7 @@ Sin claves, la app arranca en **modo demo**: usa datos de ejemplo y lo guarda to
 ## Conectar Supabase (datos)
 
 1. Crea un proyecto en [supabase.com](https://supabase.com).
-2. Abre **SQL Editor** y ejecuta `supabase/migrations/0001_init.sql` y después `0002_recipes.sql` (recetas). El script crea:
+2. Abre **SQL Editor** y ejecuta `supabase/migrations/0001_init.sql` después `0002_recipes.sql` (recetas) y `0003_dates_gifts.sql` (cumpleaños, fechas y regalos). El script crea:
    - las tablas `entries`, `collections` y `settings`;
    - la seguridad RLS (cada fila es solo de su dueña);
    - la búsqueda sin acentos;
@@ -85,7 +85,7 @@ El idioma se cambia sin recargar, se guarda en el dispositivo y en tus ajustes. 
 
 - Supabase guarda todo menos las fotos, que van a Cloudinary.
 - La app es de una sola usuaria y el registro está cerrado.
-- No hay recordatorios ni tareas repetidas. El autorrelleno queda para más adelante.
+- No hay recordatorios ni tareas repetidas (por eso Cumpleaños no tiene «Avisarme»). El autorrelleno queda para más adelante.
 - Búsqueda: se filtra por colección y año. No corrige faltas; solo ignora acentos y mayúsculas (ñ = n). El ruso no se toca.
 - Papelera: lo borrado se guarda 30 días.
 - Año: desplegable verde oscuro, un año cada vez.
@@ -101,12 +101,13 @@ El idioma se cambia sin recargar, se guarda en el dispositivo y en tus ajustes. 
 - Colecciones: reordenar las 12 de Inicio, abrir una colección (subcarpetas, tarjetas especiales que se pueden renombrar y aceptan arrastrar, selección, mover) y crear una nueva.
 - Buscar, Ajustes, Papelera y Login.
 - Editar colección (nombre, carpeta, tipo, portada con icono o foto recortada, Inicio).
+- Cumpleaños y fechas importantes: calendario del mes, próximas fechas («en N días», «cumple 41»), añadir/editar/borrar; icono pequeño en el calendario de Inicio.
+- Futuros regalos: fotos (Cloudinary), precio, para quién, enlace, estado idea → comprado → regalado, filtros y aviso del próximo cumpleaños.
 - Recetas: lista con filtros, búsqueda por ingrediente, estrellas y favoritas; nueva/editar con fotos (Cloudinary), ingredientes y pasos; ver receta con raciones que recalculan los ingredientes y «¿Cuándo la hice?».
 - Modo demo, cola sin conexión, tres idiomas, PWA y tests.
 
 **Pendiente (ver el PDF de diseño):**
 - Pantallas especiales:
-  - Cumpleaños y fechas, y Futuros regalos;
   - Torneos;
   - Enlaces de Diseño;
   - tabla de Contactos.
