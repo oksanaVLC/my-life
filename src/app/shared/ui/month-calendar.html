@@ -14,7 +14,7 @@
       @if (c) {
         <button type="button" class="cal-day" [class.has]="c.count && !c.important" [class.imp]="c.important" [class.today]="c.today"
           [class.sel]="c.iso === selected()" [attr.aria-pressed]="c.iso === selected()" (click)="selected.set(c.iso)"
-          [attr.aria-label]="c.day + (c.names ? ' · ' + c.names : '') + (c.count ? ' · ' + ('calendar.items' | t: { n: c.count }) : '')">{{ c.day }}@if (c.icon) { <span class="cal-bd" aria-hidden="true"><app-date-icon [icon]="c.icon" [size]="16" /></span> }</button>
+          [attr.aria-label]="c.day + (c.names ? ' · ' + c.names : '') + (c.count ? ' · ' + ('calendar.items' | t: { n: c.count }) : '')">{{ c.day }}@if (c.icon) { <span class="cal-bd" aria-hidden="true"><app-date-icon [icon]="c.icon" [size]="20" /></span> }</button>
       } @else { <span></span> }
     }
   </div>

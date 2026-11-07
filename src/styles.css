@@ -226,7 +226,7 @@ app-entry-card.row app-star { order: 5; }
 .p-g { background: var(--p-green); } .p-y { background: var(--p-yellow); } .p-b { background: var(--p-blue); } .p-l { background: var(--p-lilac); } .p-p { background: var(--p-pink); }
 
 /* inicio */
-.hero { display: grid; grid-template-columns: minmax(0, 480px) minmax(0, 1fr); gap: 28px; padding: 40px; border-radius: var(--r-card); background-image: var(--g-green); }
+.hero { display: grid; grid-template-columns: minmax(0, 480px) minmax(0, 1fr); gap: 28px; padding: 20px; border-radius: var(--r-card); background-image: var(--g-green); }
 .hero-cal, .hero-collage { display: flex; flex-direction: column; gap: 16px; }
 .hero-collage .btn { align-self: flex-end; }
 .collage { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
@@ -242,7 +242,7 @@ app-entry-card.row app-star { order: 5; }
 .cal-day.imp { background-image: var(--g-orange); font-weight: 700; }
 .cal-day.today { box-shadow: inset 0 0 0 2.5px var(--c-ink); font-weight: 700; }
 .cal-day.sel:not(.today) { box-shadow: inset 0 0 0 2px #B9B9B4; }
-.cal-status { display: flex; flex-direction: column; gap: 2px; min-height: 64px; padding: 10px 14px; border-radius: var(--r-card); background: #FFF3E6; }
+.cal-status { display: flex; flex-direction: column; gap: 2px; min-height: 52px; padding: 5px 7px; border-radius: var(--r-card); background: #FFF3E6; }
 .cal-status-day { font-size: 13px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--c-text-2); }
 .cal-status-text { font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal-status-text.muted { font-weight: 500; }
@@ -314,7 +314,7 @@ app-entry-card.row app-star { order: 5; }
 
 /* ---------- tablet */
 @media (max-width: 1100px) {
-  .hero { grid-template-columns: 1fr; padding: 24px; }
+  .hero { grid-template-columns: 1fr; padding: 12px; }
   .edit-layout { grid-template-columns: 1fr; }
   .main-nav a { padding: 10px 10px; font-size: 14px; letter-spacing: .04em; }
 }
@@ -475,6 +475,7 @@ app-recipe-card.row .rc-foot { padding: 0 16px; gap: 10px; }
 .bd-chip.ev { background: #FFF1C9; }
 .bd-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bd-chip app-date-icon { flex-shrink: 0; display: inline-flex; }
+app-date-icon img { display: block; object-fit: contain; }
 .bd-side { display: flex; flex-direction: column; gap: 18px; }
 .gift-card { position: relative; display: flex; text-decoration: none; color: inherit; background: #fff; border-radius: var(--r-card); box-shadow: var(--sh-card), inset 0 0 0 1.5px var(--c-ink); overflow: hidden; }
 .gift-card .special-body { padding-right: 44px; }
@@ -773,7 +774,7 @@ nav.seg > a { flex-shrink: 0; white-space: nowrap; }
   .gf-row { grid-template-columns: 1fr 120px; }
   .gift-card .special-cover { flex-basis: 96px; width: 96px; }
   .head-ic { width: 52px; height: 52px; }
-  .head-ic app-date-icon svg { width: 28px; height: 28px; }
+  .head-ic app-date-icon svg, .head-ic app-date-icon img { width: 28px; height: 28px; }
   app-gift-card.row .gc-photo { width: 104px; height: 104px; align-self: flex-start; margin: 10px 0 10px 10px; border-radius: var(--r-tile); }
   app-gift-card.row .gc-body { padding: 10px 12px; }
   app-gift-card.row .gc-title { font-size: 17px; }
@@ -808,6 +809,14 @@ nav.seg > a { flex-shrink: 0; white-space: nowrap; }
   .grid.specials { grid-template-columns: 1fr; }
   .cc-name { font-size: 17px; } .cc-body { flex-direction: column; gap: 2px; padding: 10px 12px; }
   .collage { gap: 8px; } .collage-cell { border-width: 4px; }
+  /* Inicio: calendario más ancho, título en una línea, 2 tarjetas principales por fila */
+  .cal { padding: 14px; }
+  .cal-title { font-size: 19px; white-space: nowrap; }
+  .grid.main-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .main-tile { gap: 8px; }
+  .main-tile app-icon svg { width: 48px; height: 48px; }
+  .main-tile-foot { width: 84%; font-size: 17px; }
+  .btn.end { align-self: center; }
   .quote { font-size: 19px; padding: 18px; }
   .title-input { font-size: 26px; }
   .login { grid-template-columns: 1fr; } .login-art { padding: 24px; }

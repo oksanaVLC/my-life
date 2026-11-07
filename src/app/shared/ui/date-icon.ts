@@ -6,11 +6,15 @@ const COLORS: Record<DateIcon, string> = {
   cake: '#D6336C', fireworks: '#E8590C', cheers: '#C99400', heart: '#E64980', star: '#E0A200', travel: '#1C7ED6', graduation: '#7048E8',
 };
 
-/** Icono de cumpleaños o fecha importante, con su color. */
+/** Icono de cumpleaños o fecha importante, con su color. El cumpleaños es un dibujo (public/img/cake.png). */
 @Component({
   selector: 'app-date-icon',
   imports: [Icon],
-  template: `<app-icon [name]="icon()" [size]="size()" [color]="color()" stroke="2" />`,
+  template: `@if (icon() === 'cake') {
+    <img src="img/cake.png" [width]="size()" [height]="size()" alt="" />
+  } @else {
+    <app-icon [name]="icon()" [size]="size()" [color]="color()" stroke="2" />
+  }`,
   host: { class: 'date-icon' },
 })
 export class DateIconC {
