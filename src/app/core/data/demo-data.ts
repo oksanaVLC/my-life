@@ -1,4 +1,4 @@
-import { Collection, Contact, Entry, Gift, ImportantDate, LinkItem, Recipe } from './models';
+import { Collection, Contact, Entry, Gift, ImportantDate, LinkItem, Recipe, Tournament } from './models';
 
 const now = '2026-11-04T10:00:00.000Z';
 const c = (id: string, name: string, cover: Collection['cover'], extra: Partial<Collection> = {}): Collection => ({
@@ -144,4 +144,24 @@ const lk = (id: string, url: string, title: string, note: string, tags: string[]
 });
 export const DEMO_LINKS: LinkItem[] = [
   lk('lk1', 'https://salonoramai.com', 'Hair Boutique · Salón Oramai', 'Peluquería en Madrid (Salamanca). Web minimal y aireada: fotos grandes, títulos de servicios en mayúsculas, tono delicado.', ['#peluquería', '#minimal', '#belleza'], 'Webs que destacan', { favorite: true }),
+];
+
+/* ------------------------------------------------------------------ torneos de ejemplo */
+const tn = (id: string, date: string, name: string, extra: Partial<Tournament> = {}): Tournament => ({
+  id, collectionId: 'torneos', date, name, detail: '', place: '', city: 'Valencia', organizer: '', trophy: false, createdAt: '2026-09-01T10:00:00Z', updatedAt: '2026-09-01T10:00:00Z', ...extra,
+});
+const chess = { publicId: 'demo-ajedrez', url: 'img/collage/ajedrez.svg' };
+export const DEMO_TOURNAMENTS: Tournament[] = [
+  tn('t1', '2026-11-14', 'Torneo infantil de otoño', { time: '10:00', detail: 'Inscrito', place: 'Club de Ajedrez Ruzafa', organizer: 'torneos@ajedrezruzafa.es' }),
+  tn('t2', '2026-12-12', 'Torneo de Navidad', { detail: 'Plazo de inscripción: 1 dic', place: 'Casa de la Cultura', city: 'Paterna', organizer: 'navidad@ajedrezpaterna.es' }),
+  tn('t3', '2027-01-23', 'Open escolar sub-10', { detail: 'Por confirmar', place: 'Colegio Las Torres', organizer: 'open@lastorres.es' }),
+  tn('t4', '2026-10-18', 'Liga escolar · jornada 2', { detail: '5 partidas · 4 ganadas', place: 'Polideportivo de Benimaclet', organizer: 'liga@escolaresvlc.es', position: 2, trophy: true, photo: chess }),
+  tn('t5', '2026-09-27', 'Torneo de verano', { detail: 'Quedó 5º de 24', place: 'Paseo de la Malva-rosa', organizer: 'verano@clubmalvarrosa.es', position: 5, photo: chess }),
+  tn('t6', '2026-06-14', 'Campeonato escolar', { detail: '¡Campeón!', place: 'Colegio Las Torres', organizer: 'campeonato@lastorres.es', position: 1, trophy: true, photo: chess }),
+  tn('t7', '2026-05-10', 'Torneo de primavera', { detail: 'Partidas rápidas', place: 'Club de Ajedrez Ruzafa', organizer: 'torneos@ajedrezruzafa.es', position: 3, trophy: true }),
+  tn('t8', '2026-03-15', 'Rápidas sub-8', { detail: 'Su primer torneo', place: 'Casa de la Cultura', city: 'Paterna', organizer: 'rapidas@ajedrezpaterna.es', photo: chess }),
+  tn('t9', '2026-02-07', 'Torneo de invierno', { place: 'Club de Ajedrez Ruzafa', position: 1, trophy: true }),
+  tn('t10', '2025-12-13', 'Navidad 2025', { place: 'Casa de la Cultura', city: 'Paterna', position: 2, trophy: true }),
+  tn('t11', '2025-11-08', 'Otoño 2025', { place: 'Club de Ajedrez Ruzafa', position: 7 }),
+  tn('t12', '2025-10-04', 'Primer open', { place: 'Colegio Las Torres', position: 12 }),
 ];

@@ -1,0 +1,41 @@
+<app-crumbs [items]="crumbs()" />
+<div class="page-head plain">
+  <div>
+    <h1>{{ 'collage.title' | t }}</h1>
+    <p class="lead">{{ 'collage.lead' | t }}</p>
+  </div>
+  <div class="row-gap">
+    <a routerLink="/" class="btn white">{{ 'common.cancel' | t }}</a>
+    <button type="button" class="btn primary" [disabled]="busy().size" (click)="save()"><app-icon name="check" [size]="18" stroke="2.6" />{{ 'collage.save' | t }}</button>
+  </div>
+</div>
+@if (error()) { <p class="alert" role="alert">{{ error() }}</p> }
+
+<ol class="cg-grid" [attr.aria-label]="'collage.slots' | t">
+  @for (s of slots(); track $index; let i = $index, first = $first, last = $last) {
+    <li class="cg-slot" [class.empty]="!s" [class.over]="dragOver() === i" [class.dragging]="dragFrom() === i"
+      [attr.draggable]="!!s" (dragstart)="onDragStart(i, $event)" (dragover)="onDragOver(i, $event)" (dragleave)="dragOver.set(null)" (drop)="onDrop(i, $event)" (dragend)="onDragEnd()">
+      <span class="cg-n" aria-hidden="true">{{ i + 1 }}</span>
+      @if (s) {
+        <div class="cg-img"><img [src]="src(s).src" [style.transform]="src(s).cssRotate ? 'rotate(' + src(s).cssRotate + 'deg)' : null" alt="" draggable="false" /></div>
+        @if (busy().has(i)) { <span class="re-uploading" role="status">{{ 'cover.uploading' | t }}</span> }
+        <div class="cg-actions" role="group" [attr.aria-label]="'collage.slotN' | t: { n: i + 1 }">
+          <button type="button" class="round" [disabled]="first" (click)="move(i, -1)" [attr.aria-label]="'collage.left' | t"><app-icon name="back" [size]="16" stroke="2.4" /></button>
+          <button type="button" class="round" [disabled]="last" (click)="move(i, 1)" [attr.aria-label]="'collage.right' | t"><app-icon name="chev" [size]="16" stroke="2.4" /></button>
+          <button type="button" class="round" (click)="rotate(i)" [attr.aria-label]="'cover.rotate' | t"><app-icon name="rotate" [size]="16" /></button>
+          <label class="round" [attr.aria-label]="'collage.replace' | t" [title]="'collage.replace' | t">
+            <input type="file" accept="image/*" class="sr-only" (change)="pick(i, $event)" /><app-icon name="image" [size]="16" />
+          </label>
+          <button type="button" class="round danger" (click)="clear(i)" [attr.aria-label]="'collage.remove' | t"><app-icon name="trash" [size]="16" /></button>
+        </div>
+      } @else {
+        <label class="cg-add">
+          <input type="file" accept="image/*" class="sr-only" (change)="pick(i, $event)" />
+          @if (busy().has(i)) { <span>{{ 'cover.uploading' | t }}</span> }
+          @else { <app-icon name="plus" [size]="30" stroke="2" /><strong>{{ 'collage.add' | t }}</strong><span class="muted">{{ 'collage.slotN' | t: { n: i + 1 } }}</span> }
+        </label>
+      }
+    </li>
+  }
+</ol>
+<p class="muted">{{ 'collage.hint' | t: { n: filled() } }}</p>

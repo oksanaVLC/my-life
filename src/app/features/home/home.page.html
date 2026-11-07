@@ -11,9 +11,9 @@
     @if (sections().collage) {
       <div class="hero-collage">
         <div class="collage">
-          @for (src of collage; track src) { <img [src]="src" alt="" loading="lazy" /> }
+          @for (c of collage(); track $index) { <span class="collage-cell"><img [src]="c.src" [style.transform]="c.cssRotate ? 'rotate(' + c.cssRotate + 'deg)' : null" alt="" loading="lazy" /></span> }
         </div>
-        <span class="btn white disabled-look">{{ 'home.editCollage' | t }}</span>
+        <a routerLink="/collage" class="btn white">{{ 'home.editCollage' | t }}</a>
       </div>
     }
   </section>

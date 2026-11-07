@@ -73,7 +73,16 @@ export interface Settings {
   homeSections: Record<HomeSection, boolean>;
   weekStartsMonday: boolean;
   showBirthdaysInCalendar: boolean;
+  /** Las 6 fotos de la cabecera de Inicio (null = hueco vacío). Sin definir = las de ejemplo. */
+  collage?: (CollageSlot | null)[];
 }
+
+export interface CollageSlot {
+  photo: ImageRef;
+  /** giro en grados */
+  rotation: 0 | 90 | 180 | 270;
+}
+export const COLLAGE_SLOTS = 6;
 
 export type HomeSection = 'calendar' | 'collage' | 'quote' | 'featured' | 'main' | 'collections' | 'latest';
 
@@ -192,6 +201,30 @@ export interface LinkItem {
   /** pestaña: «Webs que destacan», «Paletas»… */
   group: string;
   favorite: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+}
+
+/* ------------------------------------------------------------------ torneos */
+export interface Tournament {
+  id: string;
+  collectionId: string;
+  /** AAAA-MM-DD */
+  date: string;
+  /** HH:MM (opcional) */
+  time?: string;
+  name: string;
+  /** línea pequeña: «Inscrito», «5 partidas · 4 ganadas»… */
+  detail: string;
+  place: string;
+  city: string;
+  /** email o web del organizador */
+  organizer: string;
+  /** puesto final (si ya se jugó) */
+  position?: number;
+  trophy: boolean;
+  photo?: ImageRef;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;

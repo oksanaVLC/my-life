@@ -7,6 +7,18 @@ import { SupabaseService, isDemo } from './supabase';
  * Sesión de la única usuaria. Entrar con contraseña o con enlace por correo.
  * El registro está cerrado en Supabase (Auth → «Disable signups»).
  */
+/**
+ * Supabase manda los errores en inglés: devolvemos su código («invalid_credentials»…)
+ * y la pantalla muestra el texto en el idioma elegido. El mensaje original queda en la consola.
+ */
+export function errorCode(error: { code?: string; status?: number; message: string }): string {
+  console.warn('Supabase Auth:', error.code ?? error.status, error.message);
+  if (error.code) return error.code;
+  if (!error.status || /fetch|network/i.test(error.message)) return 'network';
+  if (error.status === 429) return 'over_request_rate_limit';
+  return 'other';
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly supabase = inject(SupabaseService);
@@ -30,7 +42,7 @@ export class AuthService {
     const sb = await this.supabase.client();
     if (!sb) return null;
     const { error } = await sb.auth.signInWithPassword({ email, password });
-    return error ? error.message : null;
+    return error ? errorCode(error) : null;
   }
 
   async sendMagicLink(email: string): Promise<string | null> {
@@ -40,7 +52,7 @@ export class AuthService {
       email,
       options: { shouldCreateUser: false, emailRedirectTo: location.origin },
     });
-    return error ? error.message : null;
+    return error ? errorCode(error) : null;
   }
 
   async signOut(): Promise<void> {

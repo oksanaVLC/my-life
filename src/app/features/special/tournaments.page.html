@@ -1,0 +1,172 @@
+@if (missing()) {
+  <app-empty icon="chess" [title]="'notFound.title' | t" [text]="'notFound.text' | t"><a routerLink="/colecciones" class="btn primary">{{ 'nav.collections' | t }}</a></app-empty>
+} @else if (col(); as c) {
+  <app-crumbs [items]="crumbs()" />
+  <div class="page-head">
+    <div>
+      <h1>{{ c.name }}</h1>
+      <p class="lead">{{ 'tour.upcomingN' | tp: upcomingAll().length }} · {{ 'tour.playedN' | tp: playedAll().length }}</p>
+    </div>
+    <div class="row-gap wrap">
+      <div class="seg" role="group" [attr.aria-label]="'tour.show' | t">
+        @for (w of ['all', 'upcoming', 'played']; track w) {
+          <button type="button" [class.on]="when() === w" [attr.aria-pressed]="when() === w" (click)="when.set($any(w)); limit.set(5)">{{ 'tour.when.' + w | t }}</button>
+        }
+      </div>
+      <button type="button" class="btn primary" (click)="startAdd()"><app-icon name="plus" [size]="18" stroke="2.4" />{{ 'tour.add' | t }}</button>
+      <a class="btn soft sm" [routerLink]="'/colecciones/' + c.id + '/editar'"><app-icon name="pencil" [size]="16" />{{ 'collectionEdit.button' | t }}</a>
+    </div>
+  </div>
+
+  <div class="tr-stats">
+    <div class="card stat"><span class="lbl">{{ 'tour.played' | t }}</span><strong>{{ stats().played }}</strong></div>
+    <div class="card stat"><span class="lbl">{{ 'tour.trophies' | t }}</span><strong>{{ stats().trophies }}</strong></div>
+    <div class="card stat"><span class="lbl">1º · 2º · 3º</span><strong>{{ stats().podium[0] }} · {{ stats().podium[1] }} · {{ stats().podium[2] }}</strong></div>
+    <div class="card stat prio"><span class="lbl">{{ 'tour.next' | t }}</span>
+      @if (stats().next; as n) { <strong class="tr-next">{{ n.date }} · {{ n.name }}</strong> } @else { <strong class="tr-next">—</strong> }
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <label class="status-select"><app-icon name="pin" [size]="16" /><span>{{ 'tour.city' | t }}</span>
+      <select class="input" [value]="city()" (change)="city.set(value($event)); limit.set(5)">
+        <option value="all">{{ 'gifts.all' | t }}</option>
+        @for (ct of cities(); track ct) { <option [value]="ct">{{ ct }}</option> }
+      </select>
+    </label>
+    <label class="status-select"><span>{{ 'tour.prize' | t }}</span>
+      <select class="input" [value]="prize()" (change)="prize.set($any(value($event))); limit.set(5)">
+        @for (p of ['all', 'trophy', 'podium', 'none']; track p) { <option [value]="p">{{ 'tour.prizes.' + p | t }}</option> }
+      </select>
+    </label>
+  </div>
+
+  @if (toast()) {
+    <p class="toast" role="status">{{ toast() }}
+      @if (lastTrashed()) { <button type="button" class="link-btn" (click)="undo()">{{ 'recipes.undo' | t }}</button> }
+    </p>
+  }
+
+  @if (all().length) {
+    <section class="card ct-card">
+      <div class="ct-scroll">
+        <table class="ct-table tr-table">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'tour.photo' | t }}</th>
+              <th scope="col">{{ 'tour.date' | t }}</th>
+              <th scope="col">{{ 'tour.name' | t }}</th>
+              <th scope="col">{{ 'tour.place' | t }}</th>
+              <th scope="col">{{ 'tour.trophy' | t }}</th>
+              <th scope="col">{{ 'tour.position' | t }}</th>
+              <th scope="col">{{ 'tour.organizer' | t }}</th>
+            </tr>
+          </thead>
+          @if (when() !== 'played') {
+            <tbody>
+              <tr class="tr-section"><th colspan="7" scope="rowgroup">{{ 'tour.when.upcoming' | t }} · {{ upcoming().length }}</th></tr>
+              @for (t of upcoming(); track t.id) { <ng-container *ngTemplateOutlet="row; context: { $implicit: t, up: true }" /> }
+              @empty { <tr><td colspan="7" class="ct-empty muted">{{ 'tour.noUpcoming' | t }}</td></tr> }
+            </tbody>
+          }
+          @if (when() !== 'upcoming') {
+            <tbody class="played">
+              <tr class="tr-section"><th colspan="7" scope="rowgroup">{{ 'tour.when.played' | t }} · {{ playedFiltered().length }}
+                @if (playedFiltered().length > played().length) { {{ 'tour.showingLast' | t: { n: played().length } }} }</th></tr>
+              @for (t of played(); track t.id) { <ng-container *ngTemplateOutlet="row; context: { $implicit: t, up: false }" /> }
+              @empty { <tr><td colspan="7" class="ct-empty muted">{{ 'tour.noPlayed' | t }}</td></tr> }
+            </tbody>
+          }
+        </table>
+      </div>
+      @if (playedFiltered().length > played().length) {
+        <div class="ct-foot center">
+          <button type="button" class="btn outline" (click)="limit.set(limit() + 5)">{{ 'tour.more' | t: { n: played().length, total: playedFiltered().length } }}<app-icon name="down" [size]="16" /></button>
+        </div>
+      }
+    </section>
+    <ul class="legend">
+      <li><span class="lg-box" aria-hidden="true"></span>{{ 'tour.when.upcoming' | t }}</li>
+      <li><span class="lg-box played" aria-hidden="true"></span>{{ 'tour.when.played' | t }}</li>
+      <li>{{ 'tour.legendTrophy' | t }}</li>
+    </ul>
+  } @else {
+    <app-empty icon="chess" [title]="'tour.emptyTitle' | t" [text]="'tour.emptyText' | t" />
+  }
+
+  <ng-template #row let-t let-up="up">
+    <tr class="tr-row" (click)="edit(t)" [title]="'tour.clickToEdit' | t">
+      <td>
+        @if (t.photo) { <img class="tr-photo" [src]="thumb(t.photo)" alt="" /> }
+        @else { <span class="tr-photo empty"><app-icon name="camera" [size]="20" /></span> }
+      </td>
+      <td class="tr-date"><app-icon name="cal" [size]="16" />{{ fmt(t.date) }}</td>
+      <td><button type="button" class="tr-name" (click)="edit(t); $event.stopPropagation()">{{ t.name }}</button>
+        @if (t.detail || t.time) { <small>{{ t.detail }}@if (t.detail && t.time) { · }{{ t.time }}</small> }</td>
+      <td class="tr-place">@if (t.place) { <app-icon name="pin" [size]="16" />{{ t.place }} }</td>
+      <td class="tr-c">
+        @if (up) { <span class="muted">{{ 'tour.toPlay' | t }}</span> }
+        @else if (t.trophy) { <app-icon name="trophy" [size]="24" [color]="medal(t) === 'gold' ? '#E0A200' : medal(t) === 'silver' ? '#8C96A3' : medal(t) === 'bronze' ? '#C2410C' : '#6A6A70'" [attr.aria-label]="'tour.trophy' | t" /> }
+        @else { <span class="muted">—</span> }
+      </td>
+      <td class="tr-c">
+        @if (t.position) { <span class="tr-pos" [class]="'tr-pos ' + medal(t)">{{ t.position }}º</span> } @else { <span class="muted">—</span> }
+      </td>
+      <td>@if (mailto(t.organizer); as m) { <a class="tr-org" [href]="m" (click)="$event.stopPropagation()"><app-icon name="mail" [size]="16" />{{ t.organizer }}</a> } @else { {{ t.organizer }} }</td>
+    </tr>
+  </ng-template>
+
+  <!-- Añadir / editar -->
+  <section class="card gift-form" #formCard aria-labelledby="h-tform">
+    <h2 id="h-tform">{{ (editingId() ? 'tour.edit' : 'tour.add') | t }}</h2>
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate class="gift-form-grid">
+      <div class="gf-photo-col">
+        <label class="gf-drop" [class.has]="preview()">
+          <input type="file" accept="image/*" class="sr-only" (change)="onFile($event)" />
+          @if (preview(); as p) { <img [src]="p" alt="" /> }
+          @else { <app-icon name="camera" [size]="30" /><strong>{{ 'tour.addPhoto' | t }}</strong><small>{{ 'tour.photoHint' | t }}</small> }
+        </label>
+        @if (preview()) { <button type="button" class="btn soft sm" (click)="clearPhoto()"><app-icon name="x" [size]="14" stroke="2.4" />{{ 'recipe.removePhoto' | t }}</button> }
+      </div>
+      <div class="gf-fields">
+        <label class="field"><span class="lbl">{{ 'tour.name' | t }}</span>
+          <input class="input" formControlName="name" [placeholder]="'tour.namePh' | t" [attr.aria-invalid]="submitted() && form.controls.name.invalid" />
+          @if (submitted() && form.controls.name.invalid) { <small class="danger-text" role="alert">{{ 'tour.nameRequired' | t }}</small> }
+        </label>
+        <div class="tr-row3">
+          <label class="field"><span class="lbl">{{ 'entry.date' | t }}</span><input class="input" type="date" formControlName="date" /></label>
+          <label class="field"><span class="lbl">{{ 'tour.time' | t }}</span><input class="input" type="time" formControlName="time" /></label>
+          <label class="field"><span class="lbl">{{ 'tour.position' | t }}</span><input class="input" type="number" min="1" max="999" formControlName="position" [placeholder]="'tour.positionPh' | t" /></label>
+        </div>
+        <label class="field"><span class="lbl">{{ 'tour.detail' | t }}</span><input class="input" formControlName="detail" [placeholder]="'tour.detailPh' | t" /></label>
+        <div class="gf-row">
+          <label class="field"><span class="lbl">{{ 'tour.place' | t }}</span><input class="input" formControlName="place" [placeholder]="'tour.placePh' | t" /></label>
+          <label class="field"><span class="lbl">{{ 'tour.city' | t }}</span><input class="input" formControlName="city" list="tour-cities" placeholder="Valencia" />
+            <datalist id="tour-cities">@for (ct of cities(); track ct) { <option [value]="ct"></option> }</datalist></label>
+        </div>
+        <label class="field"><span class="lbl">{{ 'tour.organizer' | t }}</span><input class="input" formControlName="organizer" placeholder="torneos@club.es" /></label>
+        <label class="check-row"><input type="checkbox" formControlName="trophy" />{{ 'tour.gotTrophy' | t }}</label>
+        @if (error()) { <p class="alert" role="alert">{{ error() }}</p> }
+        @if (confirmDelete()) {
+          <div class="confirm-box" role="alertdialog" aria-labelledby="tdel-q">
+            <p id="tdel-q" class="danger-text">{{ 'recipe.confirmDelete' | t: { title: form.value.name ?? '' } }}</p>
+            <div class="row-gap">
+              <button type="button" class="btn soft" (click)="confirmDelete.set(false)">{{ 'common.cancel' | t }}</button>
+              <button type="button" class="btn danger-solid" (click)="remove()">{{ 'entry.toTrash' | t }}</button>
+            </div>
+          </div>
+        } @else {
+          <div class="between wrap">
+            <div class="row-gap">
+              <button type="submit" class="btn primary" [disabled]="busy()"><app-icon name="check" [size]="18" stroke="2.6" />{{ (busy() ? 'cover.uploading' : 'tour.save') | t }}</button>
+              @if (editingId()) { <button type="button" class="btn soft" (click)="cancel()">{{ 'common.cancel' | t }}</button> }
+            </div>
+            @if (editingId()) { <button type="button" class="btn danger" (click)="confirmDelete.set(true)"><app-icon name="trash" [size]="18" />{{ 'tour.delete' | t }}</button> }
+          </div>
+        }
+      </div>
+    </form>
+  </section>
+} @else {
+  <p class="muted">{{ 'loader.loading' | t }}</p>
+}

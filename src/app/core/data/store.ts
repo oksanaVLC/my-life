@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { BACKEND } from './backend';
 import { LoadingService } from '../loading/loading.service';
-import { Collection, Contact, Entry, EntryType, Gift, HOME_COLLECTIONS, ImportantDate, LinkItem, Recipe, Settings, TRASH_DAYS } from './models';
+import { Collection, Contact, Entry, EntryType, Gift, HOME_COLLECTIONS, ImportantDate, LinkItem, Recipe, Settings, Tournament, TRASH_DAYS } from './models';
 
 const DEFAULT_SETTINGS: Settings = {
   lang: 'es',
@@ -32,6 +32,7 @@ export class Store {
   private readonly _gifts = signal<Gift[]>([]);
   private readonly _contacts = signal<Contact[]>([]);
   private readonly _links = signal<LinkItem[]>([]);
+  private readonly _tournaments = signal<Tournament[]>([]);
   readonly settings = signal<Settings>(DEFAULT_SETTINGS);
   readonly saveState = signal<SaveState>('saved');
   readonly loaded = signal(false);
@@ -59,6 +60,7 @@ export class Store {
   readonly giftTrash = computed(() => this._gifts().filter((g) => !!g.deletedAt));
   readonly contactTrash = computed(() => this._contacts().filter((x) => !!x.deletedAt));
   readonly linkTrash = computed(() => this._links().filter((x) => !!x.deletedAt));
+  readonly tournamentTrash = computed(() => this._tournaments().filter((x) => !!x.deletedAt));
   readonly allLinks = computed(() => this._links().filter((x) => !x.deletedAt));
   readonly recipeTrash = computed(() => this._recipes().filter((r) => !!r.deletedAt));
   /** La colección «Recetas» (la primera de tipo recetas), para las migas y como colección por defecto. */
@@ -80,6 +82,7 @@ export class Store {
     this._gifts.set(data.gifts ?? []);
     this._contacts.set(data.contacts ?? []);
     this._links.set(data.links ?? []);
+    this._tournaments.set(data.tournaments ?? []);
     // Recetas nuevas que se quedaron vacías (se cerró la ventana sin escribir nada): fuera.
     const old = Date.now() - 10 * 60_000;
     for (const r of data.recipes) {
@@ -154,6 +157,7 @@ export class Store {
     for (const g of this.giftTrash()) await this.deleteGiftForever(g.id);
     for (const x of this.contactTrash()) await this.deleteContactForever(x.id);
     for (const x of this.linkTrash()) await this.deleteLinkForever(x.id);
+    for (const x of this.tournamentTrash()) await this.deleteTournamentForever(x.id);
     for (const d of this.dateTrash()) await this.deleteDateForever(d.id);
     for (const c of this.collectionTrash()) await this.deleteCollectionForever(c.id);
   }
@@ -189,6 +193,7 @@ export class Store {
     if (isRecipes) for (const r of this.recipes()) if (!r.collectionId || ids.has(r.collectionId)) this.updateRecipe(r.id, { deletedAt: ts });
     for (const x of this._contacts()) if (!x.deletedAt && ids.has(x.collectionId)) this.updateContact(x.id, { deletedAt: ts });
     for (const x of this._links()) if (!x.deletedAt && ids.has(x.collectionId)) this.updateLink(x.id, { deletedAt: ts });
+    for (const x of this._tournaments()) if (!x.deletedAt && ids.has(x.collectionId)) this.updateTournament(x.id, { deletedAt: ts });
   }
 
   restoreCollection(id: string): void {
@@ -200,6 +205,7 @@ export class Store {
     for (const r of this._recipes()) if (r.deletedAt === ts) this.updateRecipe(r.id, { deletedAt: undefined });
     for (const x of this._contacts()) if (x.deletedAt === ts && ids.has(x.collectionId)) this.updateContact(x.id, { deletedAt: undefined });
     for (const x of this._links()) if (x.deletedAt === ts && ids.has(x.collectionId)) this.updateLink(x.id, { deletedAt: undefined });
+    for (const x of this._tournaments()) if (x.deletedAt === ts && ids.has(x.collectionId)) this.updateTournament(x.id, { deletedAt: undefined });
   }
 
   async deleteCollectionForever(id: string): Promise<void> {
@@ -214,6 +220,7 @@ export class Store {
     // Contactos y enlaces se van con su colección (en Supabase, por la clave foránea «on delete cascade»).
     this._contacts.update((l) => l.filter((x) => !set.has(x.collectionId)));
     this._links.update((l) => l.filter((x) => !set.has(x.collectionId)));
+    this._tournaments.update((l) => l.filter((x) => !set.has(x.collectionId)));
     for (const cid of ids.reverse()) {
       this._collections.update((l) => l.filter((c) => c.id !== cid));
       await this.run(() => this.backend.deleteCollectionForever(cid));
@@ -390,9 +397,34 @@ export class Store {
     await this.run(() => this.backend.deleteLinkForever(id));
   }
 
+  /* ---------------- torneos (colección «tournaments») */
+  tournamentsIn(collectionId: string): Tournament[] {
+    return this._tournaments().filter((x) => x.collectionId === collectionId && !x.deletedAt);
+  }
+  tournament(id: string): Tournament | undefined { return this._tournaments().find((x) => x.id === id); }
+  saveTournament(t: Omit<Tournament, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }): Tournament {
+    const ts = new Date().toISOString();
+    const old = t.id ? this.tournament(t.id) : undefined;
+    const next = { ...(old ?? { createdAt: ts }), ...t, id: old?.id ?? uid(), updatedAt: ts } as Tournament;
+    this._tournaments.update((l) => (old ? l.map((x) => (x.id === next.id ? next : x)) : [...l, next]));
+    void this.run(() => this.backend.upsertTournament(next));
+    return next;
+  }
+  updateTournament(id: string, patch: Partial<Tournament>): void {
+    let next: Tournament | undefined;
+    this._tournaments.update((l) => l.map((x) => (x.id === id ? (next = { ...x, ...patch, updatedAt: new Date().toISOString() }) : x)));
+    if (next) { const n = next; void this.run(() => this.backend.upsertTournament(n)); }
+  }
+  trashTournament(id: string): void { this.updateTournament(id, { deletedAt: new Date().toISOString() }); }
+  restoreTournament(id: string): void { this.updateTournament(id, { deletedAt: undefined }); }
+  async deleteTournamentForever(id: string): Promise<void> {
+    this._tournaments.update((l) => l.filter((x) => x.id !== id));
+    await this.run(() => this.backend.deleteTournamentForever(id));
+  }
+
   /** Copia de seguridad completa en JSON. */
   exportJson(): string {
-    return JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), settings: this.settings(), collections: this._collections(), entries: this._entries(), recipes: this._recipes(), dates: this._dates(), gifts: this._gifts(), contacts: this._contacts(), links: this._links() }, null, 2);
+    return JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), settings: this.settings(), collections: this._collections(), entries: this._entries(), recipes: this._recipes(), dates: this._dates(), gifts: this._gifts(), contacts: this._contacts(), links: this._links(), tournaments: this._tournaments() }, null, 2);
   }
 
   private persistEntry(e: Entry): Promise<void> {

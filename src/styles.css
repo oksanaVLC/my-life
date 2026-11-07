@@ -230,7 +230,8 @@ app-entry-card.row app-star { order: 5; }
 .hero-cal, .hero-collage { display: flex; flex-direction: column; gap: 16px; }
 .hero-collage .btn { align-self: flex-end; }
 .collage { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-.collage img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border: 6px solid #fff; box-shadow: 0 18px 34px -22px rgba(20,60,50,.55); }
+.collage-cell { display: block; aspect-ratio: 4 / 5; overflow: hidden; border: 6px solid #fff; background: #fff; box-shadow: 0 18px 34px -22px rgba(20,60,50,.55); }
+.collage img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .cal { padding: 22px; display: flex; flex-direction: column; gap: 10px; }
 .cal-head { display: flex; align-items: center; justify-content: space-between; }
 .cal-title { font-size: 24px; }
@@ -319,6 +320,12 @@ app-entry-card.row app-star { order: 5; }
 }
 
 /* ---------- móvil */
+/* ---------- Login: ojito de la contraseña ---------- */
+.pwd { position: relative; display: block; }
+.pwd .input { padding-right: 56px; }
+.pwd-eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 48px; height: 48px; border: none; border-radius: 50%; background: none; color: #4A4A50; display: inline-flex; align-items: center; justify-content: center; }
+.pwd-eye:hover { background: var(--c-soft); }
+
 /* ---------- Cambiar portada (recorte) ---------- */
 .alert { align-self: flex-start; padding: 10px 16px; border-radius: var(--r-card); background: #FDECEA; color: var(--c-danger); font-weight: 600; }
 .crop-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
@@ -675,6 +682,54 @@ nav.seg > a { flex-shrink: 0; white-space: nowrap; }
 .lk-edit { display: flex; flex-direction: column; gap: 12px; }
 .lk-grid.list .lk-card { flex-direction: row; }
 .lk-grid.list .lk-body { padding-right: 70px; }
+/* ---------- Torneos ---------- */
+.tr-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.tr-next { font-size: 24px !important; line-height: 1.2; }
+.tr-table { min-width: 980px; }
+.tr-table tbody.played { background: #F7F7F5; }
+.tr-section th { text-align: left !important; letter-spacing: .12em; text-transform: uppercase; font-size: var(--fs-label); padding: 12px 14px !important; background: #F1F1EE !important; color: var(--c-ink) !important; border-top: 1px solid var(--c-border); }
+.tr-row { cursor: pointer; }
+.tr-row:hover td { background: #FFFBEF; }
+.tr-row td { padding: 10px 12px; }
+.tr-photo { display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 54px; border-radius: var(--r-tile); object-fit: cover; background: #fff; }
+.tr-photo.empty { background: #ECECE8; color: #8A8A90; }
+.tr-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tr-date app-icon, .tr-place app-icon, .tr-org app-icon { margin-right: 6px; vertical-align: -2px; }
+.tr-name { display: block; padding: 0; border: none; background: none; font-size: 18px; font-weight: 700; text-align: left; color: var(--c-ink); }
+.tr-name:hover { text-decoration: underline; }
+.tr-table td small { display: block; color: var(--c-text-2); }
+.tr-c { text-align: center; }
+.tr-pos { display: inline-flex; align-items: center; justify-content: center; min-width: 52px; height: 34px; border-radius: var(--r-pill); background: #E9E9E5; font-weight: 700; }
+.tr-pos.gold { background: #F5B301; }
+.tr-pos.silver { background: #D5DCE4; }
+.tr-pos.bronze { background: #E39A5F; }
+.tr-org { color: var(--c-ink); white-space: nowrap; }
+.ct-foot.center { justify-content: center; }
+.lg-box.played { background: #F1F1EE; }
+.tr-row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 900px) { .tr-stats { grid-template-columns: 1fr 1fr; } }
+/* ---------- Editar collage ---------- */
+.cg-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 0; padding: 0; list-style: none; }
+.cg-slot { position: relative; aspect-ratio: 4 / 3; border-radius: var(--r-card); overflow: hidden; background: #fff; box-shadow: var(--sh-card); }
+.cg-slot[draggable="true"] { cursor: grab; }
+.cg-slot.dragging { opacity: .45; }
+.cg-slot.over { box-shadow: 0 0 0 3px #0B5C39, var(--sh-card); }
+.cg-img { width: 100%; height: 100%; overflow: hidden; }
+.cg-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cg-n { position: absolute; top: 12px; left: 12px; z-index: 1; width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--c-ink); color: #fff; font-weight: 700; }
+.cg-actions { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 6px; }
+.cg-actions .round { width: 42px; height: 42px; background: #fff; box-shadow: var(--sh-nav); cursor: pointer; }
+.cg-actions .round:disabled { opacity: .4; }
+.cg-actions .round.danger { color: var(--c-danger); }
+.cg-actions label.round:focus-within { outline: 3px solid #0B5C39; }
+.cg-slot.empty { box-shadow: none; border: 2px dashed #C9C9C4; background: #fff; }
+.cg-add { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; }
+.cg-add:focus-within { outline: 3px solid #0B5C39; outline-offset: -3px; }
+@media (max-width: 900px) { .cg-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .cg-grid { grid-template-columns: 1fr; } }
+
+@media (max-width: 720px) { .tr-row3 { grid-template-columns: 1fr 1fr; } .tr-next { font-size: 18px !important; } }
+
 @media (max-width: 720px) {
   .lk-h { font-size: 24px; }
   .lk-preview { min-height: 150px; }
@@ -752,7 +807,7 @@ nav.seg > a { flex-shrink: 0; white-space: nowrap; }
   .grid.covers { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .grid.specials { grid-template-columns: 1fr; }
   .cc-name { font-size: 17px; } .cc-body { flex-direction: column; gap: 2px; padding: 10px 12px; }
-  .collage { gap: 8px; } .collage img { border-width: 4px; }
+  .collage { gap: 8px; } .collage-cell { border-width: 4px; }
   .quote { font-size: 19px; padding: 18px; }
   .title-input { font-size: 26px; }
   .login { grid-template-columns: 1fr; } .login-art { padding: 24px; }

@@ -32,11 +32,12 @@ export class CollectionCard {
       case 'gifts': return this.store.gifts().length;
       case 'contacts': return this.store.contactCount(this.collection().id);
       case 'links': return this.store.linksIn(this.collection().id).length;
+      case 'tournaments': return this.store.tournamentsIn(this.collection().id).length;
       default: return this.store.entriesIn(this.collection().id, true).length;
     }
   });
   protected readonly countKey = computed(() =>
-    ({ recipes: 'recipes.count', birthdays: 'dates.count', gifts: 'gifts.count', contacts: 'contacts.count', links: 'links.count' } as Record<string, string>)[this.collection().kind] ?? 'entries.count',
+    ({ recipes: 'recipes.count', birthdays: 'dates.count', gifts: 'gifts.count', contacts: 'contacts.count', links: 'links.count', tournaments: 'tour.count' } as Record<string, string>)[this.collection().kind] ?? 'entries.count',
   );
   protected readonly link = computed(() => collectionLink(this.collection()));
 }

@@ -1,12 +1,13 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Store } from '../../core/data/store';
-import { EntryType } from '../../core/data/models';
+import { CollageSlot, EntryType } from '../../core/data/models';
 import { TPipe } from '../../core/i18n/t.pipe';
 import { Icon } from '../../shared/ui/icon';
 import { EntryCard } from '../../shared/ui/entry-card';
 import { CollectionCard } from '../../shared/ui/collection-card';
 import { MonthCalendar } from '../../shared/ui/month-calendar';
+import { normalizeCollage, slotSrc } from '../collage/collage';
 
 /** Inicio: calendario + collage, frase, destacados, lo principal, colecciones y últimas entradas. */
 @Component({
@@ -17,7 +18,10 @@ import { MonthCalendar } from '../../shared/ui/month-calendar';
 export class HomePage {
   protected readonly store = inject(Store);
   protected readonly sections = computed(() => this.store.settings().homeSections);
-  protected readonly collage = ['img/collage/sol.svg', 'img/covers/dibujos.webp', 'img/collage/hojas.svg', 'img/collage/cafe.svg', 'img/covers/crepes.jpg', 'img/collage/ajedrez.svg'];
+  /** Las fotos del collage (huecos vacíos fuera) */
+  protected readonly collage = computed(() =>
+    normalizeCollage(this.store.settings().collage).filter((s): s is CollageSlot => !!s).map((s) => slotSrc(s, 600)),
+  );
   protected readonly featured = computed(() => this.store.featured().slice(0, 4));
   protected readonly main = computed(() =>
     (['task', 'idea', 'note', 'none'] as EntryType[]).map((type) => ({

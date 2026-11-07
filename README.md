@@ -18,7 +18,7 @@ Sin claves, la app arranca en **modo demo**: usa datos de ejemplo y lo guarda to
 ## Conectar Supabase (datos)
 
 1. Crea un proyecto en [supabase.com](https://supabase.com).
-2. Abre **SQL Editor** y ejecuta `supabase/migrations/0001_init.sql` después `0002_recipes.sql` (recetas) `0003_dates_gifts.sql` (cumpleaños, fechas y regalos) y `0004_contacts_links.sql` (contactos y enlaces). El script crea:
+2. Abre **SQL Editor** y ejecuta `supabase/migrations/0001_init.sql` después `0002_recipes.sql` (recetas) `0003_dates_gifts.sql` (cumpleaños, fechas y regalos) `0004_contacts_links.sql` (contactos y enlaces) y `0005_tournaments.sql` (torneos). El script crea:
    - las tablas `entries`, `collections` y `settings`;
    - la seguridad RLS (cada fila es solo de su dueña);
    - la búsqueda sin acentos;
@@ -71,11 +71,21 @@ Sigue la guía oficial de Angular ([angular.dev/assets/context/GEMINI.md](https:
 
 ## Idiomas (ES · RU · EN)
 
-Todas las traducciones están en `scripts/i18n-source.py`, una clave con sus tres idiomas juntos. Si cambias un texto, regenera los JSON:
+Las traducciones viven en dos sitios:
+
+1. **`scripts/i18n-source.py`**: aquí se **escriben**. Cada clave lleva sus tres idiomas en una línea: `'kind.tournaments': ['Torneos', 'Tournaments', 'Турниры'],`. La app no lee este archivo.
+2. **`public/i18n/es.json`, `en.json` y `ru.json`**: estos son los que **lee la app**. No se editan a mano: los genera el script.
+
+Cada vez que añadas o cambies un texto en `i18n-source.py`:
 
 ```bash
-python3 scripts/i18n-source.py
+python scripts/i18n-source.py    # Windows
+python3 scripts/i18n-source.py   # Mac / Linux
 ```
+
+Tiene que salir `ok` con el número de textos. Después recarga con **Ctrl + F5**, para que el navegador no use los JSON antiguos que tiene guardados.
+
+Si en pantalla ves una clave en lugar del texto (por ejemplo, `kind.tournaments`), es que falta ese texto en los JSON: revisa que esté en `i18n-source.py` y vuelve a ejecutar el script.
 
 En plantillas: `{{ 'nav.home' | t }}`, con parámetros `{{ 'entry.select' | t: { title } }}`, y plurales `{{ 'count.entries' | tp: n }}`. Los plurales rusos (одна / две / пять) salen de `Intl.PluralRules`.
 
@@ -103,13 +113,12 @@ El idioma se cambia sin recargar, se guarda en el dispositivo y en tus ajustes. 
 - Editar colección (nombre, carpeta, tipo, portada con icono o foto recortada, Inicio).
 - Contactos: tabla editable por colección «contacts» (fecha automática, cada celda se guarda sola, pestañas entre tablas).
 - Enlaces: colección «links» con grupos en pestañas, favoritas, etiquetas desde la nota y edición en la tarjeta.
+- Torneos: próximos y ya jugados, cifras (jugados, trofeos, podio, próximo), filtros por localidad y premio, foto y formulario.
+- Editar collage de Inicio: 6 huecos, mover (flechas o arrastrar), girar, cambiar, quitar; se guarda en Ajustes.
 - Calendario con vistas Día, Semana, Mes y Año (la vista y la fecha van en la dirección); «Apuntar» crea con esa fecha.
 - Cumpleaños y fechas importantes: calendario del mes, próximas fechas («en N días», «cumple 41»), añadir/editar/borrar; icono pequeño en el calendario de Inicio.
 - Futuros regalos: fotos (Cloudinary), precio, para quién, enlace, estado idea → comprado → regalado, filtros y aviso del próximo cumpleaños.
 - Recetas: lista con filtros, búsqueda por ingrediente, estrellas y favoritas; nueva/editar con fotos (Cloudinary), ingredientes y pasos; ver receta con raciones que recalculan los ingredientes y «¿Cuándo la hice?».
 - Modo demo, cola sin conexión, tres idiomas, PWA y tests.
 
-**Pendiente (ver el PDF de diseño):**
-- Pantallas especiales:
-  - Torneos;
-- Editor del collage y pantalla Subir imagen (conectada a `CloudinaryService`).
+**Pendiente:** nada de las pantallas del diseño. Aplazado a propósito: autorrelleno (desde un enlace o una captura) y recordatorios.

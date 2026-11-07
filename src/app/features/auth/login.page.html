@@ -16,7 +16,15 @@
       </div>
       <label class="field"><span class="lbl">{{ 'login.email' | t }}</span><input class="input" type="email" formControlName="email" autocomplete="email" /></label>
       @if (mode() === 'password') {
-        <label class="field"><span class="lbl">{{ 'login.password' | t }}</span><input class="input" type="password" formControlName="password" autocomplete="current-password" /></label>
+        <div class="field">
+          <label class="lbl" for="pwd">{{ 'login.password' | t }}</label>
+          <span class="pwd">
+            <input id="pwd" class="input" [type]="showPwd() ? 'text' : 'password'" formControlName="password" autocomplete="current-password" />
+            <button type="button" class="pwd-eye" (click)="showPwd.set(!showPwd())" [attr.aria-pressed]="showPwd()" [attr.aria-label]="(showPwd() ? 'login.hidePwd' : 'login.showPwd') | t" [title]="(showPwd() ? 'login.hidePwd' : 'login.showPwd') | t">
+              <app-icon [name]="showPwd() ? 'eye-off' : 'eye'" [size]="22" />
+            </button>
+          </span>
+        </div>
       }
       <button type="submit" class="btn primary block" [disabled]="busy()">{{ (mode() === 'password' ? 'login.enter' : 'login.send') | t }}</button>
       @if (msg(); as m) { <p class="msg" [class.err]="m.kind === 'err'" role="status">{{ m.text }}</p> }
