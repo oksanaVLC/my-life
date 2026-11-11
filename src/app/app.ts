@@ -19,8 +19,8 @@ export class App {
   private readonly store = inject(Store);
   private readonly i18n = inject(I18nService);
   private readonly url = toSignal(inject(Router).events.pipe(filter((e) => e instanceof NavigationEnd), map((e) => e.urlAfterRedirects)), { initialValue: '/' });
-  /** En «Entrar» no se muestra la estructura de la app. */
-  protected readonly chrome = computed(() => !this.url().startsWith('/entrar'));
+  /** Sin cabecera ni barras en «Entrar» y en «Contraseña nueva» */
+  protected readonly chrome = computed(() => !/^\/(entrar|nueva-contrasena)/.test(this.url()));
   protected readonly demo = this.auth.demo;
   protected readonly saveState = this.store.saveState;
 

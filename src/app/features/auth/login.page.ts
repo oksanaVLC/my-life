@@ -7,7 +7,7 @@ import { TPipe } from '../../core/i18n/t.pipe';
 import { LangSelect, Logo } from '../../layout/layout';
 import { Icon } from '../../shared/ui/icon';
 
-/** Entrar: contraseña o enlace por correo (Supabase). Registro cerrado: la app es solo tuya. */
+/** Entrar: contraseña o enlace por correo (Supabase), y «¿Has olvidado la contraseña?». Registro cerrado: la app es solo tuya. */
 @Component({
   selector: 'app-login-page',
   imports: [ReactiveFormsModule, Logo, LangSelect, Icon, TPipe],
@@ -17,7 +17,7 @@ export class LoginPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly i18n = inject(I18nService);
-  protected readonly mode = signal<'password' | 'link'>('password');
+  protected readonly mode = signal<'password' | 'link' | 'reset'>('password');
   protected readonly msg = signal<{ kind: 'ok' | 'err'; text: string } | null>(null);
   protected readonly busy = signal(false);
   /** Ojito: ver la contraseña mientras se escribe */
@@ -39,6 +39,7 @@ export class LoginPage {
       signup_disabled: 'login.err.noAccount',
       over_request_rate_limit: 'login.err.tooMany',
       over_email_send_rate_limit: 'login.err.tooManyEmails',
+      email_address_not_authorized: 'login.err.emailNotAllowed',
       user_banned: 'login.err.blocked',
       network: 'login.err.network',
     };
@@ -50,12 +51,18 @@ export class LoginPage {
     if (this.form.controls.email.invalid) return this.msg.set({ kind: 'err', text: this.i18n.t('login.badEmail') });
     if (this.auth.demo) { await this.router.navigateByUrl('/'); return; }
     this.busy.set(true);
-    const err = this.mode() === 'password'
+    const mode = this.mode();
+    const err = mode === 'password'
       ? (password ? await this.auth.signInWithPassword(email, password) : 'no_password')
-      : await this.auth.sendMagicLink(email);
+      : mode === 'link' ? await this.auth.sendMagicLink(email) : await this.auth.sendPasswordReset(email);
     this.busy.set(false);
     if (err) return this.msg.set({ kind: 'err', text: this.errorText(err) });
-    if (this.mode() === 'link') this.msg.set({ kind: 'ok', text: this.i18n.t('login.linkSent', { email }) });
-    else await this.router.navigateByUrl('/');
+    if (mode === 'password') await this.router.navigateByUrl('/');
+    else this.msg.set({ kind: 'ok', text: this.i18n.t(mode === 'link' ? 'login.linkSent' : 'reset.sent', { email }) });
+  }
+
+  protected setMode(m: 'password' | 'link' | 'reset'): void {
+    this.mode.set(m);
+    this.msg.set(null);
   }
 }

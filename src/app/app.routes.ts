@@ -4,6 +4,8 @@ import { authGuard } from './core/supabase/auth.guard';
 /** Todas las pantallas se cargan bajo demanda (lazy). */
 export const routes: Routes = [
   { path: 'entrar', title: 'My Life', loadComponent: () => import('./features/auth/login.page').then((m) => m.LoginPage) },
+  // Sin guard: se llega desde el enlace del correo (o desde Ajustes). Sin sesión, la pantalla lo explica.
+  { path: 'nueva-contrasena', title: 'My Life', loadComponent: () => import('./features/auth/new-password.page').then((m) => m.NewPasswordPage) },
   {
     path: '',
     canActivate: [authGuard],

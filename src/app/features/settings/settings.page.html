@@ -42,6 +42,11 @@
   <section class="card set-sec" aria-labelledby="h-acc">
     <h2 id="h-acc"><app-icon name="user" [size]="24" />{{ 'settings.account' | t }}</h2>
     <p>{{ auth.demo ? ('settings.demoAccount' | t) : auth.email() }}</p>
-    @if (!auth.demo) { <button type="button" class="btn danger" (click)="auth.signOut()">{{ 'settings.signOut' | t }}</button> }
+    @if (!auth.demo) {
+      <div class="row-gap wrap">
+        <a routerLink="/nueva-contrasena" class="btn outline"><app-icon name="pencil" [size]="18" />{{ 'settings.changePwd' | t }}</a>
+        <button type="button" class="btn danger" (click)="auth.signOut()">{{ 'settings.signOut' | t }}</button>
+      </div>
+    }
   </section>
 </div>

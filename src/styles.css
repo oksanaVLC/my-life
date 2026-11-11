@@ -388,6 +388,7 @@ app-recipe-card.row .rc-foot { padding: 0 16px; gap: 10px; }
 .fav.on { background: #FDE3EE; }
 .fav.on svg { fill: #EC4C8B; stroke: #EC4C8B; }
 .lg-heart { color: #EC4C8B; } .lg-star { color: #F5B301; }
+.forgot { align-self: flex-end; margin: 6px 0 0; font-weight: 600; font-size: 15px; }
 .link-btn { margin-left: 8px; padding: 0; border: none; background: none; font: inherit; font-weight: 700; text-decoration: underline; color: inherit; cursor: pointer; }
 
 .save-pill { display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 8px 16px; border-radius: var(--r-pill); background: #fff; box-shadow: inset 0 0 0 1px var(--c-border); color: #0B5C39; font-weight: 600; }
