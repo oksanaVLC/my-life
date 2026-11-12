@@ -7,11 +7,13 @@ import { TPipe } from '../../core/i18n/t.pipe';
 import { highlight } from '../../core/search/normalize';
 import { Icon } from './icon';
 import { Star } from './controls';
+import { DoneConfirm } from './done-dialog';
 
 const TINT: Record<Entry['type'], string> = { task: 'ht-g', idea: 'ht-y', note: 'ht-b', none: 'ht-l' };
 
 /**
  * Tarjeta de una entrada (tarea, idea, nota o varios), en vista de tarjeta o de fila.
+ * Todas llevan el tick de «terminado» junto al título y el icono del tipo abajo a la derecha.
  * Colores: blanco normal · naranja = prioridad / súper interesante · dorado = destacada.
  */
 @Component({
@@ -30,6 +32,7 @@ const TINT: Record<Entry['type'], string> = { task: 'ht-g', idea: 'ht-y', note: 
 export class EntryCard {
   private readonly store = inject(Store);
   private readonly i18n = inject(I18nService);
+  private readonly doneConfirm = inject(DoneConfirm);
   readonly entry = input.required<Entry>();
   readonly view = input<'cards' | 'list'>('cards');
   readonly query = input('');
@@ -51,8 +54,9 @@ export class EntryCard {
   protected feature(): void {
     this.store.toggleFeatured(this.entry().id);
   }
+  /** Terminar pregunta antes con un aviso; volver a activar, no. */
   protected toggleDone(): void {
-    this.store.updateEntry(this.entry().id, { done: !this.entry().done });
+    void this.doneConfirm.toggle(this.entry());
   }
   protected onDrag(ev: DragEvent): void {
     ev.dataTransfer?.setData('text/entry-id', this.entry().id);

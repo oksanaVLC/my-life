@@ -10,7 +10,8 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideHttpClient(withFetch()),
-    provideRouter(routes, withComponentInputBinding(), withInMemoryScrolling({ scrollPositionRestoration: 'top' })),
+    // Scroll: al ir a otra pantalla sube arriba; al volver atrás, vuelve a donde estabas.
+    provideRouter(routes, withComponentInputBinding(), withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })),
     // Antes de pintar: textos del idioma elegido y sesión de Supabase.
     provideAppInitializer(() => Promise.all([inject(I18nService).init(), inject(AuthService).init()]).then(() => undefined)),
     provideServiceWorker('ngsw-worker.js', {

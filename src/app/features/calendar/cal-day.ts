@@ -6,6 +6,7 @@ import { TPipe, TPluralPipe } from '../../core/i18n/t.pipe';
 import { DateIconC } from '../../shared/ui/date-icon';
 import { Icon } from '../../shared/ui/icon';
 import { datesOn, entriesOn, entryLink, isPriority } from './calendar-data';
+import { DoneConfirm } from '../../shared/ui/done-dialog';
 
 /** Vista Día: horas de 8 a 21 (o más si hace falta), lo que no tiene hora aparte y un resumen. */
 @Component({
@@ -20,7 +21,7 @@ import { datesOn, entriesOn, entryLink, isPriority } from './calendar-data';
             <div class="cd-items">
               @for (e of h.items; track e.id) {
                 <div class="cd-item" [class.prio]="prio(e)" [class.done]="e.done">
-                  @if (e.type === 'task') { <input type="checkbox" [checked]="e.done" (change)="toggle(e)" [attr.aria-label]="'entry.complete' | t" /> }
+                  @if (e.type === 'task') { <input type="checkbox" [checked]="e.done" (change)="toggle(e, $event)" [attr.aria-label]="'entry.complete' | t" /> }
                   @else { <app-icon [name]="e.type" [size]="18" /> }
                   <a [routerLink]="link(e)">{{ e.time }} · {{ e.title || ('entry.untitled' | t) }}</a>
                 </div>
@@ -43,7 +44,7 @@ import { datesOn, entriesOn, entryLink, isPriority } from './calendar-data';
           <h2 id="cd-nt">{{ 'cal.noTime' | t }}</h2>
           @for (e of noTime(); track e.id) {
             <div class="cd-item" [class.prio]="prio(e)" [class.done]="e.done">
-              @if (e.type === 'task') { <input type="checkbox" [checked]="e.done" (change)="toggle(e)" [attr.aria-label]="'entry.complete' | t" /> }
+              @if (e.type === 'task') { <input type="checkbox" [checked]="e.done" (change)="toggle(e, $event)" [attr.aria-label]="'entry.complete' | t" /> }
               @else { <app-icon [name]="e.type" [size]="18" /> }
               <a [routerLink]="link(e)">{{ e.title || ('entry.untitled' | t) }}</a>
             </div>
@@ -59,6 +60,7 @@ import { datesOn, entriesOn, entryLink, isPriority } from './calendar-data';
 })
 export class CalDay {
   private readonly store = inject(Store);
+  private readonly doneConfirm = inject(DoneConfirm);
   readonly day = input.required<string>();
   readonly openWeek = output<void>();
 
@@ -80,5 +82,9 @@ export class CalDay {
 
   protected prio(e: Entry): boolean { return isPriority(e); }
   protected link(e: Entry): string[] { return entryLink(e); }
-  protected toggle(e: Entry): void { this.store.updateEntry(e.id, { done: !e.done }); }
+  /** Completar pregunta antes; si dice «Todavía no», la casilla vuelve a quedar sin marcar. */
+  protected async toggle(e: Entry, ev: Event): Promise<void> {
+    const box = ev.target as HTMLInputElement;
+    if (!(await this.doneConfirm.toggle(e))) box.checked = e.done;
+  }
 }

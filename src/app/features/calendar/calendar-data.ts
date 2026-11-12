@@ -1,4 +1,4 @@
-import { Entry, ImportantDate } from '../../core/data/models';
+import { Entry, ImportantDate, Tournament } from '../../core/data/models';
 import { Store } from '../../core/data/store';
 
 /** Fecha local → AAAA-MM-DD */
@@ -24,6 +24,14 @@ export function datesOn(store: Store, day: string): ImportantDate[] {
   const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
   return store.dates().filter((x) => x.month === d.getMonth() + 1 && (x.day === d.getDate() || (x.day > last && d.getDate() === last)));
 }
+
+/** Torneos de ese día (se ven con el caballo de ajedrez). */
+export function tournamentsOn(store: Store, day: string): Tournament[] {
+  return store.tournaments().filter((t) => t.date === day).sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''));
+}
+
+/** Enlace a la pantalla de torneos de su colección. */
+export const tournamentLink = (t: Tournament): string[] => ['/torneos', t.collectionId];
 
 /** Para un mes: mapa día → cosas y si alguna es prioritaria. */
 export function monthIndex(store: Store, year: number, month0: number): Map<string, { n: number; prio: boolean }> {

@@ -15,7 +15,7 @@ import { collectionLink } from '../../core/data/collection-link';
       <app-cover [collection]="collection()" />
       @if (badge() !== null) { <span class="cc-badge" [attr.aria-label]="'collections.onHome' | t">⌂ {{ badge() }}</span> }
       <span class="cc-body">
-        <span class="cc-name">{{ collection().name }}</span>
+        <span class="cc-name" [title]="collection().name">{{ collection().name }}</span>
         <span class="cc-count">{{ countKey() | tp: count() }}</span>
       </span>
     </a>`,

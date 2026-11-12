@@ -1,9 +1,9 @@
 <div class="page-head">
   <div>
-    <h1>{{ titleKey() | t }}</h1>
+    <h1>@if (type() === 'featured') {<span class="star-badge" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="#F5B301" stroke="#E0A200" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg></span>}{{ titleKey() | t }}</h1>
     <p class="lead">{{ 'list.lead.' + type() | t }}</p>
   </div>
-  @if (type() !== 'featured') { <app-plus-menu [where]="titleKey() | t" /> }
+  @if (type() !== 'featured' && type() !== 'done') { <app-plus-menu [where]="titleKey() | t" /> }
 </div>
 
 <div class="toolbar">
@@ -21,11 +21,19 @@
   }
 </div>
 
-@if (isTask()) {
-  <div class="seg tabs" role="group" [attr.aria-label]="'list.status' | t">
-    <button type="button" [class.on]="status() === 'active'" [attr.aria-pressed]="status() === 'active'" (click)="status.set('active')">{{ 'list.active' | t }} · {{ counts().active }}</button>
-    <button type="button" [class.on]="status() === 'done'" [attr.aria-pressed]="status() === 'done'" (click)="status.set('done')">{{ 'list.done' | t }} · {{ counts().done }}</button>
-  </div>
+@if (type() === 'done') {
+  <nav class="seg chips" [attr.aria-label]="'list.kind' | t">
+    @for (k of kinds; track k.value) {
+      <button type="button" class="chip-btn" [class.on]="kind() === k.value" [attr.aria-pressed]="kind() === k.value" (click)="kind.set(k.value)">{{ k.key | t }}</button>
+    }
+  </nav>
+}
+
+@if (tabs(); as tb) {
+  <nav class="seg tabs" [attr.aria-label]="'list.status' | t">
+    <a [routerLink]="tb.active" [class.on]="status() === 'active'" [attr.aria-current]="status() === 'active' ? 'page' : null">{{ tb.activeKey | t }} · {{ counts().active }}</a>
+    <a [routerLink]="tb.done" [class.on]="status() === 'done'" [attr.aria-current]="status() === 'done' ? 'page' : null">{{ tb.doneKey | t }} · {{ counts().done }}</a>
+  </nav>
 }
 
 @if (pageItems().length) {
@@ -48,11 +56,11 @@
     </label>
   </nav>
 } @else {
-  <app-empty [icon]="type() === 'featured' ? 'star' : type()" [title]="'list.emptyTitle' | t" [text]="(year() === 'all' ? 'list.emptyText' : 'list.emptyYear') | t: { year: year() }" />
+  <app-empty [icon]="type() === 'featured' ? 'star' : type() === 'done' ? 'check' : type()" [title]="'list.emptyTitle' | t" [text]="(status() === 'done' ? 'list.emptyDone' : year() === 'all' ? 'list.emptyText' : 'list.emptyYear') | t: { year: year() }" />
 }
 
 <ul class="legend">
   <li><i class="sw white"></i>{{ 'legend.normal.' + (type() === 'idea' ? 'idea' : 'task') | t }}</li>
   <li><i class="sw orange"></i>{{ 'legend.prio.' + (type() === 'idea' ? 'idea' : 'task') | t }}</li>
-  <li><i class="sw gold"></i>{{ 'legend.featured' | t }}</li>
+  <li><i class="star-badge sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="#F5B301" stroke="#E0A200" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg></i>{{ 'legend.featured' | t }}</li>
 </ul>

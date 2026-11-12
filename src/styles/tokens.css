@@ -78,7 +78,7 @@
   --tap: 44px;        /* tamaño mínimo táctil */
   --btn-h: 48px;
   --field-h: 50px;
-  --card-min: 300px;  /* grid de tarjetas: repeat(auto-fill, minmax(300px, 1fr)) */
+  --card-min: 300px;  /* (ya no se usa en .grid.cards: 4 por fila, 2 en móvil) */
   --cover-min: 240px; /* grid de colecciones */
 
   /* ---- Breakpoints (usar en @media) ----

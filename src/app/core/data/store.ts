@@ -60,12 +60,15 @@ export class Store {
   readonly giftTrash = computed(() => this._gifts().filter((g) => !!g.deletedAt));
   readonly contactTrash = computed(() => this._contacts().filter((x) => !!x.deletedAt));
   readonly linkTrash = computed(() => this._links().filter((x) => !!x.deletedAt));
+  /** Torneos no borrados (para el calendario) */
+  readonly tournaments = computed(() => this._tournaments().filter((x) => !x.deletedAt));
   readonly tournamentTrash = computed(() => this._tournaments().filter((x) => !!x.deletedAt));
   readonly allLinks = computed(() => this._links().filter((x) => !x.deletedAt));
   readonly recipeTrash = computed(() => this._recipes().filter((r) => !!r.deletedAt));
   /** La colección «Recetas» (la primera de tipo recetas), para las migas y como colección por defecto. */
   readonly recipesCollection = computed(() => this.collections().find((c) => c.kind === 'recipes'));
-  readonly featured = computed(() => this.entries().filter((e) => e.featured));
+  /** Destacadas que siguen activas (las terminadas van a su lista de terminadas) */
+  readonly featured = computed(() => this.entries().filter((e) => e.featured && !e.done));
   readonly years = computed(() => {
     const ys = new Set(this.entries().map(yearOf));
     ys.add(new Date().getFullYear());

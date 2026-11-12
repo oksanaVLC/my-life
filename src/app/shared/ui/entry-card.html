@@ -3,19 +3,25 @@
     <label class="ec-check">
       <input type="checkbox" [checked]="selected()" (change)="toggleSelect.emit()" [attr.aria-label]="'entry.select' | t: { title: entry().title }" />
     </label>
-  } @else if (entry().type === 'task') {
-    <label class="ec-check">
-      <input type="checkbox" [checked]="entry().done" (change)="toggleDone()" [attr.aria-label]="'entry.complete' | t" />
-    </label>
   }
-  <span class="ec-tile ic" [class]="'ec-tile ic ' + tint()"><app-icon [name]="entry().type" [size]="view() === 'list' ? 24 : 28" color="#2A2A2E" /></span>
   <span class="ec-type">{{ 'type.' + entry().type | t }}</span>
-  <span class="ec-when"><app-icon name="clock" [size]="14" />{{ when() }}</span>
+  <span class="ec-when">{{ when() }}</span>
   <app-star [on]="entry().featured" (toggle)="feature()" />
 </div>
-<h3 class="ec-title"><a [routerLink]="link()">{{ title().pre }}@if (title().hit) {<mark>{{ title().hit }}</mark>}{{ title().post }}</a></h3>
+<div class="ec-title-row">
+  <button type="button" class="ec-done" role="checkbox" [attr.aria-checked]="entry().done"
+          [attr.aria-label]="(entry().done ? 'done.unmark' : 'done.mark') | t: { title: entry().title || ('entry.untitled' | t) }"
+          [title]="(entry().done ? 'done.unmark' : 'done.mark') | t: { title: entry().title || ('entry.untitled' | t) }"
+          (click)="toggleDone()">
+    <span class="ec-done-ring"><app-icon name="check" [size]="14" stroke="3" /></span>
+  </button>
+  <h3 class="ec-title" [title]="entry().title || ('entry.untitled' | t)"><a [routerLink]="link()">{{ title().pre }}@if (title().hit) {<mark>{{ title().hit }}</mark>}{{ title().post }}</a></h3>
+</div>
 @if (entry().body && view() === 'cards') { <p class="ec-body">{{ entry().body }}</p> }
-<div class="ec-tags">
-  @if (where()) { <span class="chip">{{ where() }}</span> }
-  @for (t of entry().tags; track t) { <span class="chip tag">{{ t }}</span> }
+<div class="ec-foot">
+  <div class="ec-tags">
+    @if (where()) { <span class="chip">{{ where() }}</span> }
+    @for (t of entry().tags; track t) { <span class="chip tag">{{ t }}</span> }
+  </div>
+  <span class="ec-tile ic" [class]="'ec-tile ic ' + tint()"><app-icon [name]="entry().type" [size]="view() === 'list' ? 22 : 26" color="#2A2A2E" /></span>
 </div>

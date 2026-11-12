@@ -22,17 +22,31 @@
 @if (sections().quote) {
   <section class="quote card" [attr.aria-label]="'home.quote' | t">
     <span class="quote-mark" aria-hidden="true">“</span>
-    <p>{{ 'home.quoteText' | t }}</p>
+    @if (quote(); as q) {
+      <blockquote class="quote-body" aria-live="polite">
+        <p>{{ q.text }}</p>
+        @if (q.author) { <footer>— {{ q.author }}</footer> }
+      </blockquote>
+      <div class="quote-actions">
+        @if (quoteCount() > 1) {
+          <button type="button" class="round" (click)="nextQuote()" [attr.aria-label]="'quotes.another' | t" [title]="'quotes.another' | t"><app-icon name="rotate" [size]="18" /></button>
+        }
+        <a routerLink="/frases" class="round" [attr.aria-label]="'quotes.edit' | t" [title]="'quotes.edit' | t"><app-icon name="pencil" [size]="18" /></a>
+      </div>
+    } @else {
+      <p class="quote-body">{{ 'home.quoteText' | t }}</p>
+      <a routerLink="/frases" class="btn white sm">{{ 'quotes.add' | t }}</a>
+    }
   </section>
 }
 
 @if (sections().featured && featured().length) {
   <section class="block" aria-labelledby="h-feat">
     <div class="block-head">
-      <h2 id="h-feat">{{ 'nav.featured' | t }}</h2>
+      <h2 id="h-feat"><span class="star-badge" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="#F5B301" stroke="#E0A200" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg></span>{{ 'nav.featured' | t }}</h2>
       <a routerLink="/destacados" class="btn white sm">{{ 'common.seeMore' | t }}<app-icon name="chev" [size]="16" /></a>
     </div>
-    <div class="grid cards">
+    <div class="grid cards quad">
       @for (e of featured(); track e.id) { <app-entry-card [entry]="e" /> }
     </div>
   </section>
@@ -41,10 +55,10 @@
 @if (sections().main) {
   <section class="block" aria-labelledby="h-main">
     <h2 id="h-main">{{ 'home.main' | t }}</h2>
-    <div class="grid main-tiles">
+    <div class="grid main-tiles quad">
       @for (m of main(); track m.type) {
         <a [routerLink]="m.link" class="main-tile" [class]="'main-tile ' + m.tint">
-          <app-icon [name]="m.type" [size]="72" color="#2A2A2E" />
+          <app-icon [name]="m.type" [size]="72" stroke="1.3" color="#3A3A40" />
           <span class="main-tile-foot"><strong>{{ 'type.plural.' + m.type | t }}</strong><span>{{ m.count }}</span></span>
         </a>
       }
@@ -59,7 +73,7 @@
       <a routerLink="/colecciones/nueva" class="btn primary sm"><app-icon name="plus" [size]="16" stroke="2.4" />{{ 'collections.new' | t }}</a>
     </div>
     <p class="muted">{{ 'home.collectionsHint' | t }}</p>
-    <div class="grid covers">
+    <div class="grid covers quad">
       @for (c of store.homeCollections(); track c.id) { <app-collection-card [collection]="c" /> }
     </div>
     <a routerLink="/colecciones" class="btn outline end">{{ 'home.allCollections' | t: { n: totalCollections() } }}<app-icon name="chev" [size]="16" stroke="2.4" /></a>
@@ -69,7 +83,7 @@
 @if (sections().latest) {
   <section class="block" aria-labelledby="h-latest">
     <h2 id="h-latest">{{ 'home.latest' | t }}</h2>
-    <div class="grid cards">
+    <div class="grid cards quad">
       @for (e of latest(); track e.id) { <app-entry-card [entry]="e" /> }
     </div>
   </section>

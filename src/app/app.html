@@ -12,4 +12,5 @@
   @if (saveState() === 'offline') { <p class="pill-status" role="status">{{ 'save.offline' | t }}</p> }
   @if (saveState() === 'error') { <p class="pill-status err" role="alert">{{ 'save.error' | t }}</p> }
 }
+<app-done-dialog />
 <app-loader-overlay />

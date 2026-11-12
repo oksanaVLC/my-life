@@ -75,7 +75,16 @@ export interface Settings {
   showBirthdaysInCalendar: boolean;
   /** Las 6 fotos de la cabecera de Inicio (null = hueco vacío). Sin definir = las de ejemplo. */
   collage?: (CollageSlot | null)[];
+  /** Mis frases: en Inicio sale una cada día */
+  quotes?: Quote[];
 }
+
+export interface Quote {
+  id: string;
+  text: string;
+  author?: string;
+}
+export const QUOTE_MAX = 280;
 
 export interface CollageSlot {
   photo: ImageRef;

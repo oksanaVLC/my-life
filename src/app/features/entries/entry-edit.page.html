@@ -4,7 +4,7 @@
       <app-crumbs [items]="crumbs()" />
       <p class="save-note" role="status"><app-icon name="check" [size]="16" stroke="2.6" />{{ 'save.auto' | t }}</p>
     </div>
-    <button type="button" class="btn" [class.primary]="e.done" [class.outline]="!e.done" (click)="patch({ done: !e.done })">
+    <button type="button" class="btn" [class.primary]="e.done" [class.outline]="!e.done" (click)="toggleDone(e)">
       <app-icon name="check" [size]="18" stroke="2.6" />{{ (e.done ? 'entry.completed' : 'entry.markDone') | t }}
     </button>
   </div>

@@ -8,6 +8,7 @@ import { Entry, EntryType } from '../../core/data/models';
 import { TPipe } from '../../core/i18n/t.pipe';
 import { Icon } from '../../shared/ui/icon';
 import { Crumbs, Star } from '../../shared/ui/controls';
+import { DoneConfirm } from '../../shared/ui/done-dialog';
 import { collectionOptions } from '../collections/collection-options';
 
 /**
@@ -21,6 +22,7 @@ import { collectionOptions } from '../collections/collection-options';
 })
 export class EntryEditPage {
   private readonly store = inject(Store);
+  private readonly doneConfirm = inject(DoneConfirm);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder).nonNullable;
   private readonly destroyRef = inject(DestroyRef);
@@ -56,6 +58,11 @@ export class EntryEditPage {
     this.form.valueChanges.pipe(debounceTime(600), takeUntilDestroyed(this.destroyRef)).subscribe((v) => {
       this.patch({ title: v.title, body: v.body, date: v.date || undefined, time: v.time || undefined, collectionId: v.collectionId || undefined });
     });
+  }
+
+  /** Terminar pregunta antes con el aviso; volver a activar, no. */
+  protected toggleDone(e: Entry): void {
+    void this.doneConfirm.toggle(e);
   }
 
   protected patch(p: Partial<Entry>): void {

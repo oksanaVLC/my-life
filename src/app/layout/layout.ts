@@ -1,5 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
 import { I18nService, LANGS } from '../core/i18n/i18n.service';
 import { TPipe } from '../core/i18n/t.pipe';
 import { Lang } from '../core/data/models';
@@ -13,6 +15,7 @@ const NAV = [
   { path: '/ideas', key: 'nav.ideas' },
   { path: '/notas', key: 'nav.notes' },
   { path: '/varios', key: 'nav.misc' },
+  { path: '/terminadas', key: 'nav.done' },
   { path: '/colecciones', key: 'nav.collections' },
 ];
 
@@ -47,14 +50,18 @@ export class LangSelect {
   }
 }
 
-/** Cabecera de escritorio y tablet. */
+/**
+ * Cabecera. En escritorio los enlaces van en línea; en tablet y móvil
+ * se recogen en un desplegable que se abre con el botón de menú.
+ */
 @Component({
   selector: 'app-header',
   imports: [RouterLink, RouterLinkActive, Logo, LangSelect, Icon, TPipe],
+  host: { '(document:keydown.escape)': 'close(true)', '(document:click)': 'outside($event)' },
   template: `
     <header class="header container">
       <a routerLink="/" class="home-link" [attr.aria-label]="'nav.home' | t"><app-logo /></a>
-      <nav class="main-nav" [attr.aria-label]="'nav.main' | t">
+      <nav id="main-nav" class="main-nav" [class.open]="open()" [attr.aria-label]="'nav.main' | t">
         @for (n of nav; track n.path) {
           <a [routerLink]="n.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: !!n.exact }" ariaCurrentWhenActive="page">{{ n.key | t }}</a>
         }
@@ -62,11 +69,33 @@ export class LangSelect {
       <div class="header-tools">
         <app-lang-select />
         <a routerLink="/ajustes" class="round" [attr.aria-label]="'nav.settings' | t"><app-icon name="user" [size]="18" /></a>
+        <button #toggle type="button" class="round menu-toggle" aria-controls="main-nav" [attr.aria-expanded]="open()"
+                [attr.aria-label]="(open() ? 'nav.close' : 'nav.open') | t" (click)="open.set(!open())">
+          <app-icon [name]="open() ? 'x' : 'menu'" [size]="20" />
+        </button>
       </div>
     </header>`,
 })
 export class Header {
   protected readonly nav = NAV;
+  protected readonly open = signal(false);
+  private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly toggle = viewChild<ElementRef<HTMLButtonElement>>('toggle');
+
+  constructor() {
+    // Al ir a otra pantalla, el menú se cierra.
+    inject(Router).events.pipe(filter((e) => e instanceof NavigationEnd), takeUntilDestroyed()).subscribe(() => this.open.set(false));
+  }
+
+  protected close(focusToggle = false): void {
+    if (!this.open()) return;
+    this.open.set(false);
+    if (focusToggle) this.toggle()?.nativeElement.focus();
+  }
+
+  protected outside(ev: MouseEvent): void {
+    if (this.open() && !this.host.nativeElement.contains(ev.target as Node)) this.close();
+  }
 }
 
 /**

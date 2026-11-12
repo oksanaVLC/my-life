@@ -1,0 +1,60 @@
+<app-crumbs [items]="crumbs()" />
+<div class="page-head plain">
+  <div>
+    <h1>{{ 'quotes.title' | t }}</h1>
+    <p class="lead">{{ 'quotes.lead' | t }}</p>
+  </div>
+</div>
+
+<form class="card qt-new" [formGroup]="form" (ngSubmit)="add()" novalidate>
+  <div class="field">
+    <label class="lbl" for="qt-text">{{ 'quotes.new' | t }}</label>
+    <textarea #newText id="qt-text" class="input" rows="3" formControlName="text" [attr.maxlength]="max" [placeholder]="'quotes.placeholder' | t" (keydown)="onKey($event, add.bind(this))"></textarea>
+    <span class="muted qt-count">{{ form.controls.text.value.length }} / {{ max }}</span>
+  </div>
+  <div class="field">
+    <label class="lbl" for="qt-author">{{ 'quotes.author' | t }}</label>
+    <input id="qt-author" class="input" formControlName="author" maxlength="80" [placeholder]="'quotes.authorPh' | t" />
+  </div>
+  <button type="submit" class="btn primary" [disabled]="!form.controls.text.value.trim()"><app-icon name="plus" [size]="18" stroke="2.4" />{{ 'quotes.add' | t }}</button>
+</form>
+
+@if (toast()) {
+  <p class="toast" role="status">{{ toast() }}
+    @if (canUndo()) { <button type="button" class="link-btn" (click)="undo()">{{ 'recipes.undo' | t }}</button> }
+  </p>
+}
+
+@if (quotes().length) {
+  <h2 class="qt-h">{{ 'quotes.count' | tp: quotes().length }}</h2>
+  <ol class="qt-list">
+    @for (q of quotes(); track q.id) {
+      <li class="card qt-item" [class.today]="q.id === todayId()">
+        @if (editingId() === q.id) {
+          <form class="qt-edit" [formGroup]="editForm" (ngSubmit)="saveEdit()" novalidate>
+            <label class="sr-only" [for]="'qe-' + q.id">{{ 'quotes.text' | t }}</label>
+            <textarea [id]="'qe-' + q.id" class="input" rows="3" formControlName="text" [attr.maxlength]="max" (keydown)="onKey($event, saveEdit.bind(this))"></textarea>
+            <label class="sr-only" [for]="'qa-' + q.id">{{ 'quotes.author' | t }}</label>
+            <input [id]="'qa-' + q.id" class="input" formControlName="author" maxlength="80" [placeholder]="'quotes.authorPh' | t" />
+            <div class="row-gap">
+              <button type="submit" class="btn primary sm" [disabled]="!editForm.controls.text.value.trim()">{{ 'common.save' | t }}</button>
+              <button type="button" class="btn white sm" (click)="cancelEdit()">{{ 'common.cancel' | t }}</button>
+            </div>
+          </form>
+        } @else {
+          <blockquote class="qt-text">
+            <p>{{ q.text }}</p>
+            @if (q.author) { <footer>— {{ q.author }}</footer> }
+          </blockquote>
+          @if (q.id === todayId()) { <span class="chip qt-today">{{ 'quotes.today' | t }}</span> }
+          <div class="qt-actions">
+            <button type="button" class="round" (click)="startEdit(q)" [attr.aria-label]="'collectionEdit.button' | t"><app-icon name="pencil" [size]="16" /></button>
+            <button type="button" class="round danger" (click)="remove(q)" [attr.aria-label]="'entry.delete' | t"><app-icon name="trash" [size]="16" /></button>
+          </div>
+        }
+      </li>
+    }
+  </ol>
+} @else {
+  <app-empty icon="pencil" [title]="'quotes.emptyTitle' | t" [text]="'quotes.emptyText' | t" />
+}
