@@ -11,6 +11,7 @@ import { Icon } from '../../shared/ui/icon';
 /**
  * Buscar en todo: títulos, texto, #etiquetas y nombre de la colección.
  * Sin distinguir acentos ni ñ/n. Filtros: colección y año.
+ * Acepta `/buscar?q=…` (la barra de Inicio llega así).
  */
 @Component({
   selector: 'app-search-page',
@@ -19,6 +20,7 @@ import { Icon } from '../../shared/ui/icon';
 })
 export class SearchPage {
   protected readonly store = inject(Store);
+  /** Lo que llega de la barra de Inicio: /buscar?q=… */
   private readonly route = inject(ActivatedRoute);
   protected readonly query = signal(this.route.snapshot.queryParamMap.get('q') ?? '');
   protected readonly coll = signal('all');

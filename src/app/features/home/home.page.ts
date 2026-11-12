@@ -1,60 +1,64 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { EntryType } from '../../core/data/models';
-import { Store, yearOf } from '../../core/data/store';
-import { TPipe, TPluralPipe } from '../../core/i18n/t.pipe';
-import { matches } from '../../core/search/normalize';
-import { Empty, YearSelect } from '../../shared/ui/controls';
+import { Component, computed, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { CollageSlot, EntryType } from '../../core/data/models';
+import { Store } from '../../core/data/store';
+import { TPipe } from '../../core/i18n/t.pipe';
+import { CollectionCard } from '../../shared/ui/collection-card';
 import { EntryCard } from '../../shared/ui/entry-card';
 import { Icon } from '../../shared/ui/icon';
+import { MonthCalendar } from '../../shared/ui/month-calendar';
+import { normalizeCollage, slotSrc } from '../collage/collage';
+import { quoteOfDay } from '../quotes/quotes';
 
-/**
- * Buscar en todo: títulos, texto, #etiquetas y nombre de la colección.
- * Sin distinguir acentos ni ñ/n. Filtros: colección y año.
- * Acepta `/buscar?q=…` (la barra de Inicio llega así).
- */
+/** Inicio: buscar, calendario + collage, frase, destacados, lo principal, colecciones y últimas entradas. */
 @Component({
-  selector: 'app-search-page',
-  imports: [EntryCard, YearSelect, Empty, Icon, TPipe, TPluralPipe],
-  templateUrl: './search.page.html',
+  selector: 'app-home-page',
+  imports: [RouterLink, Icon, EntryCard, CollectionCard, MonthCalendar, TPipe],
+  templateUrl: './home.page.html',
 })
-export class SearchPage {
+export class HomePage {
   protected readonly store = inject(Store);
-  /** ?q= de la dirección (withComponentInputBinding) */
-  readonly q = input('');
-  protected readonly query = linkedSignal(() => this.q());
-  protected readonly coll = signal('all');
-  protected readonly year = signal<number | 'all'>('all');
-  protected readonly type = signal<EntryType | 'all'>('all');
-  protected readonly types: (EntryType | 'all')[] = ['all', 'task', 'idea', 'note', 'none'];
+  private readonly router = inject(Router);
 
-  private readonly hits = computed(() => {
-    const q = this.query();
-    const isTag = q.trim().startsWith('#');
-    const scope = this.coll() === 'all' ? null : new Set(this.store.subtree(this.coll()));
-    const y = this.year();
-    return this.store.entries().filter((e) => {
-      if (scope && !(e.collectionId && scope.has(e.collectionId))) return false;
-      if (y !== 'all' && yearOf(e) !== y) return false;
-      const where = this.store
-        .path(e.collectionId)
-        .map((c) => c.name)
-        .join(' ');
-      return isTag
-        ? matches(e.tags.join(' '), q)
-        : matches(`${e.title} ${e.body} ${e.tags.join(' ')} ${where}`, q);
-    });
-  });
-  protected readonly results = computed(() =>
-    this.hits().filter((e) => this.type() === 'all' || e.type === this.type()),
+  /** La barra de Inicio abre Buscar con lo escrito (vacía: abre Buscar sin más). */
+  protected search(e: Event, q: string): void {
+    e.preventDefault();
+    const text = q.trim();
+    void this.router.navigate(['/buscar'], text ? { queryParams: { q: text } } : {});
+  }
+
+  protected readonly sections = computed(() => this.store.settings().homeSections);
+  /** Las fotos del collage (huecos vacíos fuera) */
+  protected readonly collage = computed(() =>
+    normalizeCollage(this.store.settings().collage)
+      .filter((s): s is CollageSlot => !!s)
+      .map((s) => slotSrc(s, 600)),
   );
-  protected countType(t: EntryType | 'all'): number {
-    return this.hits().filter((e) => t === 'all' || e.type === t).length;
+  /** Frase del día; «Otra frase» salta a la siguiente solo en esta visita */
+  private readonly quoteSkip = signal(0);
+  protected readonly quote = computed(() =>
+    quoteOfDay(this.store.settings().quotes, this.quoteSkip()),
+  );
+  protected readonly quoteCount = computed(() => this.store.settings().quotes?.length ?? 0);
+  protected nextQuote(): void {
+    this.quoteSkip.update((n) => n + 1);
   }
-
-  protected onQuery(ev: Event): void {
-    this.query.set((ev.target as HTMLInputElement).value);
-  }
-  protected onColl(ev: Event): void {
-    this.coll.set((ev.target as HTMLSelectElement).value);
-  }
+  protected readonly featured = computed(() => this.store.featured().slice(0, 4));
+  protected readonly main = computed(() =>
+    (['task', 'idea', 'note', 'none'] as EntryType[]).map((type) => ({
+      type,
+      link: { task: '/tareas', idea: '/ideas', note: '/notas', none: '/varios' }[type],
+      tint: { task: 'htc-g', idea: 'htc-y', note: 'htc-b', none: 'htc-l' }[type],
+      count: this.store.entries().filter((e) => e.type === type && !e.done).length,
+    })),
+  );
+  /** Solo entradas activas: las terminadas no salen en Inicio */
+  protected readonly latest = computed(() =>
+    this.store
+      .entries()
+      .filter((e) => !e.done)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .slice(0, 6),
+  );
+  protected readonly totalCollections = computed(() => this.store.rootCollections().length);
 }
